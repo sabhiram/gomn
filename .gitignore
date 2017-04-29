@@ -1,3 +1,6 @@
+# mnwatch ignore file
+mnwatch
+
 # Binaries for programs and plugins
 *.exe
 *.dll

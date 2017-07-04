@@ -1,0 +1,33 @@
+// Package pivx is a pivx specific implementation of the masternode monitor tool.
+package pivx
+
+////////////////////////////////////////////////////////////////////////////////
+
+import (
+	"fmt"
+
+	"github.com/sabhiram/gomn/coin"
+)
+
+////////////////////////////////////////////////////////////////////////////////
+
+//  basePath      string // path to the coins binaries
+// 	dataPath      string // path to data-directory for the coin
+// 	daemonBinName string // name of the coin daemon
+// 	queryBinName  string // name of the rpc interace binary
+
+////////////////////////////////////////////////////////////////////////////////
+
+func bootstrap(binDir, dataDir string) error {
+	fmt.Printf("Got Bootstrap for PIVX (%s, %s)\n", binDir, dataDir)
+	return nil
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+// Automatically register pivx with gomn if it is included.
+func init() {
+	coin.RegisterCoin("pivx", bootstrap)
+}
+
+////////////////////////////////////////////////////////////////////////////////

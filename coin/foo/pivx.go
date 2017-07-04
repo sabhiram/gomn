@@ -1,4 +1,4 @@
-package rpc
+package pivx
 
 import (
 	"fmt"
@@ -11,14 +11,14 @@ type RPC struct {
 	options     string // path to the data directory
 }
 
-func New() (*RPC, error) {
+func New(cliPath, dataDir string) (*RPC, error) {
 	return &RPC{
-		pivxCLIPath: "/Users/shaba/Desktop/work/code/github/crypto/PIVX/src/pivx-cli",
-		options:     "-datadir=/Users/shaba/.crypto/pivx",
+		pivxCLIPath: cliPath,
+		options:     fmt.Sprintf("-datadir=%s", dataDir),
 	}, nil
 }
 
-func (r *RPC) rpcCmd(cmds ...string) ([]byte, []byte, error) {
+func (r *RPC) runCmd(cmds ...string) ([]byte, []byte, error) {
 	if len(r.options) > 0 {
 		cmds = append([]string{r.options}, cmds...)
 	}
@@ -49,7 +49,7 @@ func (r *RPC) rpcCmd(cmds ...string) ([]byte, []byte, error) {
 }
 
 func (r *RPC) GetInfo() (interface{}, error) {
-	stdout, stderr, err := r.rpcCmd("getinfo")
+	stdout, stderr, err := r.runCmd("getinfo")
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +59,7 @@ func (r *RPC) GetInfo() (interface{}, error) {
 }
 
 func (r *RPC) MasternodeStatus() (interface{}, error) {
-	stdout, stderr, err := r.rpcCmd("masternode", "status")
+	stdout, stderr, err := r.runCmd("masternode", "status")
 	if err != nil {
 		return nil, err
 	}

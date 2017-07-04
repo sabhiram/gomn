@@ -23,23 +23,7 @@ func fatalOnError(err error) {
 ////////////////////////////////////////////////////////////////////////////////
 
 func main() {
-	log.Printf("MAIN\n")
-
 	fatalOnError(coin.BootstrapCoin("pivx"))
-	fatalOnError(coin.BootstrapCoin("tx"))
-
-	// prpc, err := pivx.New()
-	// if err != nil {
-	// 	log.Fatalf("Fatal error: %s\n", err.Error())
-	// }
-
-	// println("GET MN status")
-	// _, err = prpc.MasternodeStatus()
-	// if err != nil {
-	// 	log.Printf("Error: %s\n", err.Error())
-	// }
-	//     println("GET INFO")
-	//     prpc.GetInfo()
 }
 
 ////////////////////////////////////////////////////////////////////////////////

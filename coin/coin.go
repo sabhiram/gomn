@@ -14,74 +14,71 @@ import (
 
 ////////////////////////////////////////////////////////////////////////////////
 
-// WalletDownloader is a per-coin wallet fetcher.
-type WalletDownloader struct {
-	version     string // version of the wallet
-	downloadURL string // url to fetch the wallet
-	sha256sum   string // shasum for the download
-}
-
-// NewWalletDownloader returns a new instance of a wallet downloader.
-func NewWalletDownloader(v, url, sha string) *WalletDownloader {
-	return &WalletDownloader{
-		version:     v,
-		downloadURL: url,
-		sha256sum:   sha,
-	}
-}
-
-func (w *WalletDownloader) Log() {
-	fmt.Printf("WalletDownloader::%#v\n", w)
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-type BootstrapFn func(binDir, dataDir string) error
+type BootstrapFn func(c *Coin, binDir, dataDir string) error
 
 ////////////////////////////////////////////////////////////////////////////////
 
 // coin represents all things needed to setup / interact-with or monitor
 // a given coin's masternode.
-type coin struct {
-	name        string      // name of the coin, used as the key for lookup
+type Coin struct {
+	// Coin specific constants
+	name      string // name of the coin, used as the key for lookup
+	daemonBin string // name of the daemon to launch the coin's node
+	statusBin string // name of the binary to check status
+
+	// Coin specific downloaders (can be nil0)
+	walletDownloader    *WalletDownloader
+	bootstrapDownloader *BootstrapDownloader
+
+	// Coin specific functions to invoke!
 	bootstrapFn BootstrapFn // Fetch and bootstrap the coin daemon
 }
 
 // coins stores the currently registered coins that the system is aware of.
 var (
 	coinsLock = sync.RWMutex{}
-	coins     = map[string]*coin{}
+	coins     = map[string]*Coin{}
 )
 
 ////////////////////////////////////////////////////////////////////////////////
 
-func RegisterCoin(key string, bstrapFn BootstrapFn) error {
+func RegisterCoin(
+	name, daemonBin, statusBin string,
+	wdl *WalletDownloader, bdl *BootstrapDownloader,
+	bootstrapFn BootstrapFn) error {
+
 	coinsLock.Lock()
 	defer coinsLock.Unlock()
 
-	if _, ok := coins[key]; ok {
-		return fmt.Errorf("coin with name=%s already registered", key)
+	if _, ok := coins[name]; ok {
+		return fmt.Errorf("coin with name=%s already registered", name)
 	}
 
-	coins[key] = &coin{
-		name:        key,
-		bootstrapFn: bstrapFn,
+	coins[name] = &Coin{
+		name:      name,
+		daemonBin: daemonBin,
+		statusBin: statusBin,
+
+		walletDownloader:    wdl,
+		bootstrapDownloader: bdl,
+
+		bootstrapFn: bootstrapFn,
 	}
 
-	fmt.Printf("Registered %s\n", key)
+	fmt.Printf("Registered %s\n", name)
 	return nil
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-func BootstrapCoin(key string) error {
+func BootstrapCoin(name string) error {
 	coinsLock.Lock()
 	defer coinsLock.Unlock()
 
-	if coin, ok := coins[key]; ok {
-		return coin.bootstrapFn("pivxd", "~/.pivx/")
+	if coin, ok := coins[name]; ok {
+		return coin.bootstrapFn(coin, "pivxd", "~/.pivx/")
 	}
-	return fmt.Errorf("coin %s is not registered with gomn", key)
+	return fmt.Errorf("coin %s is not registered with gomn", name)
 }
 
 // TODO:

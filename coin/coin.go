@@ -71,6 +71,17 @@ func RegisterCoin(
 
 ////////////////////////////////////////////////////////////////////////////////
 
+func (c *Coin) DownloadWallet() error {
+	if err := c.walletDownloader.FetchWalletToPath("/Users/shaba/Desktop/work/code/go/src/github.com/sabhiram/gomn/test"); err != nil {
+		fmt.Printf("Got error: %s\n", err.Error())
+	} else {
+		fmt.Printf("All good baby!\n")
+	}
+	return nil
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 func BootstrapCoin(name string) error {
 	coinsLock.Lock()
 	defer coinsLock.Unlock()

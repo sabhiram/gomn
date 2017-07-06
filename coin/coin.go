@@ -9,6 +9,7 @@ package coin
 
 import (
 	"fmt"
+	"log"
 	"sync"
 )
 
@@ -22,9 +23,11 @@ type BootstrapFn func(c *Coin, binDir, dataDir string) error
 // a given coin's masternode.
 type Coin struct {
 	// Coin specific constants
-	name      string // name of the coin, used as the key for lookup
-	daemonBin string // name of the daemon to launch the coin's node
-	statusBin string // name of the binary to check status
+	name            string // name of the coin, used as the key for lookup
+	daemonBin       string // name of the daemon to launch the coin's node
+	statusBin       string // name of the binary to check status
+	defaultBinPath  string // path to where the bins will exist
+	defaultDataPath string // path to where the data will exist
 
 	// Coin specific downloaders (can be nil0)
 	walletDownloader    *WalletDownloader
@@ -44,6 +47,7 @@ var (
 
 func RegisterCoin(
 	name, daemonBin, statusBin string,
+	defBinPath, defDataPath string,
 	wdl *WalletDownloader, bdl *BootstrapDownloader,
 	bootstrapFn BootstrapFn) error {
 
@@ -55,9 +59,11 @@ func RegisterCoin(
 	}
 
 	coins[name] = &Coin{
-		name:      name,
-		daemonBin: daemonBin,
-		statusBin: statusBin,
+		name:            name,
+		daemonBin:       daemonBin,
+		statusBin:       statusBin,
+		defaultBinPath:  defBinPath,
+		defaultDataPath: defDataPath,
 
 		walletDownloader:    wdl,
 		bootstrapDownloader: bdl,
@@ -65,18 +71,27 @@ func RegisterCoin(
 		bootstrapFn: bootstrapFn,
 	}
 
-	fmt.Printf("Registered %s\n", name)
+	log.Printf("Registered %s\n", name)
 	return nil
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-func (c *Coin) DownloadWallet() error {
-	if err := c.walletDownloader.FetchWalletToPath("/Users/shaba/Desktop/work/code/go/src/github.com/sabhiram/gomn/test"); err != nil {
-		fmt.Printf("Got error: %s\n", err.Error())
-	} else {
-		fmt.Printf("All good baby!\n")
+func (c *Coin) DownloadWallet(binDir, dataDir string) error {
+	if len(binDir) > 0 {
+		if err := c.walletDownloader.DownloadToPath(binDir); err != nil {
+			log.Printf("Got error: %s\n", err.Error())
+			return err
+		}
 	}
+
+	if len(dataDir) > 0 {
+		if err := c.bootstrapDownloader.DownloadToPath(dataDir); err != nil {
+			log.Printf("Got error: %s\n", err.Error())
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -87,11 +102,11 @@ func BootstrapCoin(name string) error {
 	defer coinsLock.Unlock()
 
 	if coin, ok := coins[name]; ok {
-		return coin.bootstrapFn(coin, "pivxd", "~/.pivx/")
+		// TODO: Pass flags into these functions :) Each fn should decide
+		// 		 which path to use
+		return coin.bootstrapFn(coin, coin.defaultBinPath, coin.defaultDataPath)
 	}
 	return fmt.Errorf("coin %s is not registered with gomn", name)
 }
 
-// TODO:
-// HTTP fetch helper methods to download files etc...
-//
+////////////////////////////////////////////////////////////////////////////////

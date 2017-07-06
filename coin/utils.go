@@ -20,6 +20,35 @@ import (
 
 ////////////////////////////////////////////////////////////////////////////////
 
+// ProgressTracker implements the Write function so we can have it track the number
+// of bytes being written.
+type ProgressTracker struct {
+	total int64 // Number of total bytes
+	count int64 // Number of bytes seen in Reader
+}
+
+// NewProgressTracker returns a instance that implements a writer interface so we
+// can track progress of a download via a tee reader in the caller.
+func NewProgressTracker(total int64) *ProgressTracker {
+	return &ProgressTracker{
+		total: total,
+		count: 0,
+	}
+}
+
+// Write implements the Write function needed to satisfy the Writer interface.
+func (pt *ProgressTracker) Write(bs []byte) (int, error) {
+	n := len(bs)
+	pt.count += int64(n)
+	percent := (pt.count * 10000) / pt.total
+	percr := percent / 100
+	percf := percent % 100
+	fmt.Printf("%02d.%02d%% Done -- %d/%d\r", percr, percf, pt.count, pt.total)
+	return n, nil
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 // downloadURLToPath fetches a file specified at `url` to `filepath`.
 func downloadURLToPath(url string, filepath string) error {
 	out, err := os.Create(filepath)
@@ -34,7 +63,8 @@ func downloadURLToPath(url string, filepath string) error {
 	}
 	defer resp.Body.Close()
 
-	_, err = io.Copy(out, resp.Body)
+	tee := io.TeeReader(resp.Body, NewProgressTracker(resp.ContentLength))
+	_, err = io.Copy(out, tee)
 	return err
 }
 

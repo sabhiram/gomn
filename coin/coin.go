@@ -8,13 +8,14 @@ package coin
 ////////////////////////////////////////////////////////////////////////////////
 
 import (
+	"errors"
 	"fmt"
 	"sync"
 )
 
 ////////////////////////////////////////////////////////////////////////////////
 
-type BootstrapFn func(c *Coin, binDir, dataDir string) error
+type CoinFunc func(c *Coin, binDir, dataDir string, args []string) error
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -33,7 +34,10 @@ type Coin struct {
 	bootstrapDownloader *BootstrapDownloader
 
 	// Coin specific functions to invoke!
-	bootstrapFn BootstrapFn // Fetch and bootstrap the coin daemon
+	infoFunc      CoinFunc // Fetch coin info and other status
+	downloadFunc  CoinFunc // Download the wallet to the specified bin dir
+	bootstrapFunc CoinFunc // Fetch the blockchain bootstrap (if any)
+	configureFunc CoinFunc // Configure the coin for MN duty
 }
 
 // coins stores the currently registered coins that the system is aware of.
@@ -48,7 +52,7 @@ func RegisterCoin(
 	name, daemonBin, statusBin string,
 	defBinPath, defDataPath string,
 	wdl *WalletDownloader, bdl *BootstrapDownloader,
-	bootstrapFn BootstrapFn) error {
+	infoFunc, downloadFunc, bootstrapFunc, configureFunc CoinFunc) error {
 
 	coinsLock.Lock()
 	defer coinsLock.Unlock()
@@ -67,7 +71,10 @@ func RegisterCoin(
 		walletDownloader:    wdl,
 		bootstrapDownloader: bdl,
 
-		bootstrapFn: bootstrapFn,
+		infoFunc:      infoFunc,
+		downloadFunc:  downloadFunc,
+		bootstrapFunc: bootstrapFunc,
+		configureFunc: configureFunc,
 	}
 
 	return nil
@@ -75,36 +82,18 @@ func RegisterCoin(
 
 ////////////////////////////////////////////////////////////////////////////////
 
-func (c *Coin) DownloadWallet(binDir, dataDir string) error {
-	if len(binDir) > 0 {
-		if err := c.walletDownloader.DownloadToPath(binDir); err != nil {
-			fmt.Printf("Got error: %s\n", err.Error())
-			return err
-		}
+func (c *Coin) DownloadWallet(dstPath string) error {
+	if len(dstPath) == 0 {
+		return errors.New("unspecified destination path")
 	}
-
-	if len(dataDir) > 0 {
-		if err := c.bootstrapDownloader.DownloadToPath(dataDir); err != nil {
-			fmt.Printf("Got error: %s\n", err.Error())
-			return err
-		}
-	}
-
-	return nil
+	return c.walletDownloader.DownloadToPath(dstPath)
 }
 
-////////////////////////////////////////////////////////////////////////////////
-
-func BootstrapCoin(name string) error {
-	coinsLock.Lock()
-	defer coinsLock.Unlock()
-
-	if coin, ok := coins[name]; ok {
-		// TODO: Pass flags into these functions :) Each fn should decide
-		// 		 which path to use
-		return coin.bootstrapFn(coin, coin.defaultBinPath, coin.defaultDataPath)
+func (c *Coin) DownloadBootstrap(dstPath string) error {
+	if len(dstPath) == 0 {
+		return errors.New("unspecified destination path")
 	}
-	return fmt.Errorf("coin %s is not registered with gomn", name)
+	return c.bootstrapDownloader.DownloadToPath(dstPath)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -118,6 +107,42 @@ func RegisteredCoins() []string {
 		ret = append(ret, coin)
 	}
 	return ret
+}
+
+// IsRegistered returns true if the coin specified by `name` is known to the
+// gomn system.
+func IsRegistered(name string) bool {
+	coinsLock.RLock()
+	defer coinsLock.RUnlock()
+
+	_, ok := coins[name]
+	return ok
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+func Command(name, bins, data, cmd string, args []string) error {
+	coinsLock.Lock()
+	defer coinsLock.Unlock()
+
+	c, ok := coins[name]
+	if !ok {
+		return fmt.Errorf("invalid coin specified (%s)", name)
+	}
+
+	// TODO: Perhaps each coin can have a map of registered functions so that
+	//       we can have optional doohickeys.
+	switch cmd {
+	case "info":
+		return c.infoFunc(c, bins, data, args)
+	case "download":
+		return c.downloadFunc(c, bins, data, args)
+	case "bootstrap":
+		return c.bootstrapFunc(c, bins, data, args)
+	case "configure":
+		return c.configureFunc(c, bins, data, args)
+	}
+	return fmt.Errorf("invalid command specified (%s)", cmd)
 }
 
 ////////////////////////////////////////////////////////////////////////////////

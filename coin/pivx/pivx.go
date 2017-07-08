@@ -24,12 +24,31 @@ var ()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-func bootstrap(c *coin.Coin, binDir, dataDir string) error {
-	log.Printf("Got Bootstrap for PIVX (%s, %s)\n", binDir, dataDir)
+func info(c *coin.Coin, binDir, dataDir string, args []string) error {
+	log.Printf("Got info for PIVX (%s, %s)\n", binDir, dataDir)
 	log.Printf("  with coin: %#v\n", c)
+	log.Printf("  args: %#v\n", args)
+	return nil
+}
 
-	c.DownloadWallet(binDir, dataDir)
+func download(c *coin.Coin, binDir, dataDir string, args []string) error {
+	log.Printf("Got download for PIVX (%s, %s)\n", binDir, dataDir)
+	log.Printf("  with coin: %#v\n", c)
+	log.Printf("  args: %#v\n", args)
+	return nil
+}
 
+func bootstrap(c *coin.Coin, binDir, dataDir string, args []string) error {
+	log.Printf("Got bootstrap for PIVX (%s, %s)\n", binDir, dataDir)
+	log.Printf("  with coin: %#v\n", c)
+	log.Printf("  args: %#v\n", args)
+	return nil
+}
+
+func configure(c *coin.Coin, binDir, dataDir string, args []string) error {
+	log.Printf("Got configure for PIVX (%s, %s)\n", binDir, dataDir)
+	log.Printf("  with coin: %#v\n", c)
+	log.Printf("  args: %#v\n", args)
 	return nil
 }
 
@@ -71,8 +90,10 @@ func init() {
 		bootstrapDownloader,
 
 		// Register coin functions
-		bootstrap) // Bootstrap function
-
+		info,
+		download,
+		bootstrap,
+		configure)
 }
 
 ////////////////////////////////////////////////////////////////////////////////

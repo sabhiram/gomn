@@ -56,8 +56,8 @@ COMMANDS:
 
 	CLI = struct {
 		coin     string   // Name of the coin we are operating on
-		dataPath string   // Path to coin's data directory (empty => coin default)
 		binPath  string   // Path to coin's binary directory (empty => coin default)
+		dataPath string   // Path to coin's data directory (empty => coin default)
 		args     []string // Rest of the command line, args[0] is the command
 	}{}
 )
@@ -97,11 +97,10 @@ func main() {
 			log.Printf("No coins registered!\n\n")
 		}
 	default:
-		log.Printf("Got cmd: %s and opts: %v\n", cmd, opts)
+		if err := coin.Command(CLI.coin, CLI.binPath, CLI.dataPath, cmd, opts); err != nil {
+			fatalOnError(err)
+		}
 	}
-
-	_ = coin.BootstrapCoin
-	// fatalOnError(coin.BootstrapCoin("pivx"))
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -113,11 +112,14 @@ func init() {
 
 	// CLI Argument parsing.
 	flag.StringVar(&CLI.coin, "coin", "", "currency you are setting up a mn for")
-	flag.StringVar(&CLI.dataPath, "data", "", "path where the blockchain data should reside (optional)")
 	flag.StringVar(&CLI.binPath, "bins", "", "path where the coin's binaries should reside (optional)")
+	flag.StringVar(&CLI.dataPath, "data", "", "path where the blockchain data should reside (optional)")
 
 	flag.Parse()
+
+	// Normalize and fix-up arguments.
 	CLI.args = flag.Args()
+	CLI.coin = strings.ToLower(CLI.coin)
 }
 
 ////////////////////////////////////////////////////////////////////////////////

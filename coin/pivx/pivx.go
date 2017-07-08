@@ -4,7 +4,7 @@ package pivx
 ////////////////////////////////////////////////////////////////////////////////
 
 import (
-	"log"
+	"fmt"
 	"os/user"
 	"path/filepath"
 
@@ -25,30 +25,30 @@ var ()
 ////////////////////////////////////////////////////////////////////////////////
 
 func info(c *coin.Coin, binDir, dataDir string, args []string) error {
-	log.Printf("Got info for PIVX (%s, %s)\n", binDir, dataDir)
-	log.Printf("  with coin: %#v\n", c)
-	log.Printf("  args: %#v\n", args)
+	fmt.Printf("Got info for PIVX (%s, %s)\n", binDir, dataDir)
+	fmt.Printf("  with coin: %#v\n", c)
+	fmt.Printf("  args: %#v\n", args)
 	return nil
 }
 
 func download(c *coin.Coin, binDir, dataDir string, args []string) error {
-	log.Printf("Got download for PIVX (%s, %s)\n", binDir, dataDir)
-	log.Printf("  with coin: %#v\n", c)
-	log.Printf("  args: %#v\n", args)
+	fmt.Printf("Got download for PIVX (%s, %s)\n", binDir, dataDir)
+	fmt.Printf("  with coin: %#v\n", c)
+	fmt.Printf("  args: %#v\n", args)
 	return nil
 }
 
 func bootstrap(c *coin.Coin, binDir, dataDir string, args []string) error {
-	log.Printf("Got bootstrap for PIVX (%s, %s)\n", binDir, dataDir)
-	log.Printf("  with coin: %#v\n", c)
-	log.Printf("  args: %#v\n", args)
+	fmt.Printf("Got bootstrap for PIVX (%s, %s)\n", binDir, dataDir)
+	fmt.Printf("  with coin: %#v\n", c)
+	fmt.Printf("  args: %#v\n", args)
 	return nil
 }
 
 func configure(c *coin.Coin, binDir, dataDir string, args []string) error {
-	log.Printf("Got configure for PIVX (%s, %s)\n", binDir, dataDir)
-	log.Printf("  with coin: %#v\n", c)
-	log.Printf("  args: %#v\n", args)
+	fmt.Printf("Got configure for PIVX (%s, %s)\n", binDir, dataDir)
+	fmt.Printf("  with coin: %#v\n", c)
+	fmt.Printf("  args: %#v\n", args)
 	return nil
 }
 
@@ -65,6 +65,7 @@ func homeDir() string {
 
 // Automatically register pivx with gomn if it is included.
 func init() {
+	// TODO: Move downloaders into coin structure ...
 	// Downloader for the wallet.
 	walletDownloader := coin.NewWalletDownloader(
 		"2.2.1",
@@ -78,22 +79,24 @@ func init() {
 
 	// Register the coin and any relevant functions.
 	coin.RegisterCoin(
-		// Register coin constants
+		// Register coin constants.
 		"pivx",                            // Name of the coin
 		"pivxd",                           // Daemon binaries
 		"pivx-cli",                        // Status binaries
 		filepath.Join(homeDir(), "pivx"),  // Default binary path
 		filepath.Join(homeDir(), ".pivx"), // Default data path
 
-		// Register wallet / bootstrap fetchers
+		// Register wallet / bootstrap fetchers.
 		walletDownloader,
 		bootstrapDownloader,
 
-		// Register coin functions
-		info,
-		download,
-		bootstrap,
-		configure)
+		// Register coin functions.
+		map[string]coin.CoinFunc{
+			"info":      info,
+			"download":  download,
+			"bootstrap": bootstrap,
+			"configure": configure,
+		})
 }
 
 ////////////////////////////////////////////////////////////////////////////////

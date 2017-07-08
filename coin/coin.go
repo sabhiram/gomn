@@ -34,10 +34,11 @@ type Coin struct {
 	bootstrapDownloader *BootstrapDownloader
 
 	// Coin specific functions to invoke!
-	infoFunc      CoinFunc // Fetch coin info and other status
-	downloadFunc  CoinFunc // Download the wallet to the specified bin dir
-	bootstrapFunc CoinFunc // Fetch the blockchain bootstrap (if any)
-	configureFunc CoinFunc // Configure the coin for MN duty
+	fnMap map[string]CoinFunc
+	// infoFunc      CoinFunc // Fetch coin info and other status
+	// downloadFunc  CoinFunc // Download the wallet to the specified bin dir
+	// bootstrapFunc CoinFunc // Fetch the blockchain bootstrap (if any)
+	// configureFunc CoinFunc // Configure the coin for MN duty
 }
 
 // coins stores the currently registered coins that the system is aware of.
@@ -52,7 +53,7 @@ func RegisterCoin(
 	name, daemonBin, statusBin string,
 	defBinPath, defDataPath string,
 	wdl *WalletDownloader, bdl *BootstrapDownloader,
-	infoFunc, downloadFunc, bootstrapFunc, configureFunc CoinFunc) error {
+	fnMap map[string]CoinFunc) error {
 
 	coinsLock.Lock()
 	defer coinsLock.Unlock()
@@ -71,10 +72,7 @@ func RegisterCoin(
 		walletDownloader:    wdl,
 		bootstrapDownloader: bdl,
 
-		infoFunc:      infoFunc,
-		downloadFunc:  downloadFunc,
-		bootstrapFunc: bootstrapFunc,
-		configureFunc: configureFunc,
+		fnMap: fnMap,
 	}
 
 	return nil
@@ -121,6 +119,9 @@ func IsRegistered(name string) bool {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+// Command executes a given coin's (specified by `name`), `cmd` function
+// if one was registered. If the function was nil, then it has no implementation
+// and we do nothing.  If the command was not found we return an error.
 func Command(name, bins, data, cmd string, args []string) error {
 	coinsLock.Lock()
 	defer coinsLock.Unlock()
@@ -130,19 +131,15 @@ func Command(name, bins, data, cmd string, args []string) error {
 		return fmt.Errorf("invalid coin specified (%s)", name)
 	}
 
-	// TODO: Perhaps each coin can have a map of registered functions so that
-	//       we can have optional doohickeys.
-	switch cmd {
-	case "info":
-		return c.infoFunc(c, bins, data, args)
-	case "download":
-		return c.downloadFunc(c, bins, data, args)
-	case "bootstrap":
-		return c.bootstrapFunc(c, bins, data, args)
-	case "configure":
-		return c.configureFunc(c, bins, data, args)
+	fn, ok := c.fnMap[cmd]
+	if !ok {
+		return fmt.Errorf("invalid command specified (%s)", cmd)
 	}
-	return fmt.Errorf("invalid command specified (%s)", cmd)
+
+	if fn == nil {
+		fmt.Printf("[%s] %s is a no-op. Doing nothing!\n", name, cmd)
+	}
+	return fn(c, bins, data, args)
 }
 
 ////////////////////////////////////////////////////////////////////////////////

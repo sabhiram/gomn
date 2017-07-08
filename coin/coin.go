@@ -9,7 +9,6 @@ package coin
 
 import (
 	"fmt"
-	"log"
 	"sync"
 )
 
@@ -71,7 +70,6 @@ func RegisterCoin(
 		bootstrapFn: bootstrapFn,
 	}
 
-	log.Printf("Registered %s\n", name)
 	return nil
 }
 
@@ -80,14 +78,14 @@ func RegisterCoin(
 func (c *Coin) DownloadWallet(binDir, dataDir string) error {
 	if len(binDir) > 0 {
 		if err := c.walletDownloader.DownloadToPath(binDir); err != nil {
-			log.Printf("Got error: %s\n", err.Error())
+			fmt.Printf("Got error: %s\n", err.Error())
 			return err
 		}
 	}
 
 	if len(dataDir) > 0 {
 		if err := c.bootstrapDownloader.DownloadToPath(dataDir); err != nil {
-			log.Printf("Got error: %s\n", err.Error())
+			fmt.Printf("Got error: %s\n", err.Error())
 			return err
 		}
 	}
@@ -107,6 +105,19 @@ func BootstrapCoin(name string) error {
 		return coin.bootstrapFn(coin, coin.defaultBinPath, coin.defaultDataPath)
 	}
 	return fmt.Errorf("coin %s is not registered with gomn", name)
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+// RegisteredCoins returns a list of coins that the tool knows how to configure.
+func RegisteredCoins() []string {
+	ret := []string{}
+	coinsLock.RLock()
+	defer coinsLock.RUnlock()
+	for coin, _ := range coins {
+		ret = append(ret, coin)
+	}
+	return ret
 }
 
 ////////////////////////////////////////////////////////////////////////////////

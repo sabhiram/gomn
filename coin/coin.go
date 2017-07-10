@@ -35,10 +35,9 @@ type Coin struct {
 
 	// Coin specific functions to invoke!
 	fnMap map[string]CoinFunc
-	// infoFunc      CoinFunc // Fetch coin info and other status
-	// downloadFunc  CoinFunc // Download the wallet to the specified bin dir
-	// bootstrapFunc CoinFunc // Fetch the blockchain bootstrap (if any)
-	// configureFunc CoinFunc // Configure the coin for MN duty
+
+	// Opaque interface for the coin
+	opaque interface{}
 }
 
 // coins stores the currently registered coins that the system is aware of.
@@ -53,7 +52,7 @@ func RegisterCoin(
 	name, daemonBin, statusBin string,
 	defBinPath, defDataPath string,
 	wdl *WalletDownloader, bdl *BootstrapDownloader,
-	fnMap map[string]CoinFunc) error {
+	fnMap map[string]CoinFunc, opaque interface{}) error {
 
 	coinsLock.Lock()
 	defer coinsLock.Unlock()
@@ -72,7 +71,8 @@ func RegisterCoin(
 		walletDownloader:    wdl,
 		bootstrapDownloader: bdl,
 
-		fnMap: fnMap,
+		fnMap:  fnMap,
+		opaque: opaque,
 	}
 
 	return nil
@@ -116,6 +116,10 @@ func (c *Coin) DownloadBootstrap(dstPath string) error {
 		return errors.New("unspecified destination path")
 	}
 	return c.bootstrapDownloader.DownloadToPath(dstPath)
+}
+
+func (c *Coin) GetOpaque() interface{} {
+	return c.opaque
 }
 
 ////////////////////////////////////////////////////////////////////////////////

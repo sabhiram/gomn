@@ -199,19 +199,19 @@ func extractToPath(ctype, srcfp, dstdp string) error {
 
 // WalletDownloader is a per-coin wallet fetcher.
 type WalletDownloader struct {
-	version         string // version of the wallet
-	downloadURL     string // url to fetch the wallet
-	compressionType string // type of compression ["tar.gz", "zip", "none"]
-	sha256sum       string // shasum for the download
+	Version         string // version of the wallet
+	DownloadURL     string // url to fetch the wallet
+	CompressionType string // type of compression ["tar.gz", "zip", "none"]
+	Sha256sum       string // shasum for the download
 }
 
 // NewWalletDownloader returns a new instance of a wallet downloader.
 func NewWalletDownloader(v, url, ct, sha string) *WalletDownloader {
 	return &WalletDownloader{
-		version:         v,
-		downloadURL:     url,
-		compressionType: ct,
-		sha256sum:       sha,
+		Version:         v,
+		DownloadURL:     url,
+		CompressionType: ct,
+		Sha256sum:       sha,
 	}
 }
 
@@ -219,13 +219,13 @@ func NewWalletDownloader(v, url, ct, sha string) *WalletDownloader {
 // to verify that it is indeed the expected file. If so, it extracts the
 // contents to the appropriate
 func (w *WalletDownloader) DownloadToPath(walletPath string) error {
-	log.Printf("  Fetching wallet from %s into %s\n", w.downloadURL, walletPath)
+	log.Printf("  Fetching wallet from %s into %s\n", w.DownloadURL, walletPath)
 
 	// Fetch the file into a temporary file
 	tempFile := filepath.Join(os.TempDir(), "walletdl")
 
 	// Try to fetch the wallet to the temporary file
-	if err := downloadURLToPath(w.downloadURL, tempFile); err != nil {
+	if err := downloadURLToPath(w.DownloadURL, tempFile); err != nil {
 		return err
 	}
 
@@ -248,13 +248,13 @@ func (w *WalletDownloader) DownloadToPath(walletPath string) error {
 		t = append(t, b)
 	}
 	shasum := hex.EncodeToString(t)
-	if strings.ToLower(shasum) != strings.ToLower(w.sha256sum) {
-		return fmt.Errorf("shasum for download (%s) does not match expected (%s)", shasum, w.sha256sum)
+	if strings.ToLower(shasum) != strings.ToLower(w.Sha256sum) {
+		return fmt.Errorf("shasum for download (%s) does not match expected (%s)", shasum, w.Sha256sum)
 	}
 
 	// Extract the file to the specified path, we assume that the type of file
 	// is specified at the tail end of the URL.
-	return extractToPath(w.compressionType, tempFile, walletPath)
+	return extractToPath(w.CompressionType, tempFile, walletPath)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -262,28 +262,28 @@ func (w *WalletDownloader) DownloadToPath(walletPath string) error {
 ////////////////////////////////////////////////////////////////////////////////
 
 type BootstrapDownloader struct {
-	downloadURL     string // URL to fetch bootstrap archive
-	compressionType string // type of compression ["tar.gz", "zip", "none"]
+	DownloadURL     string // URL to fetch bootstrap archive
+	CompressionType string // type of compression ["tar.gz", "zip", "none"]
 }
 
 // NewBootstrapDownloader returns a new instance of a bootstrap downloader.
 func NewBootstrapDownloader(url, ctype string) *BootstrapDownloader {
 	return &BootstrapDownloader{
-		downloadURL:     url,
-		compressionType: ctype,
+		DownloadURL:     url,
+		CompressionType: ctype,
 	}
 }
 
 // DownloadToPath grabs a archive from a web url defined in `b` and extracts
 // the file if needed into `bootstrapPath`.
 func (b *BootstrapDownloader) DownloadToPath(bootstrapPath string) error {
-	log.Printf("  Fetching bootstrap from %s into %s\n", b.downloadURL, bootstrapPath)
+	log.Printf("  Fetching bootstrap from %s into %s\n", b.DownloadURL, bootstrapPath)
 
 	// Fetch the file into a temporary file
 	tempFile := filepath.Join(os.TempDir(), "bootstrapdl")
 
 	// Try to fetch the wallet to the temporary file
-	if err := downloadURLToPath(b.downloadURL, tempFile); err != nil {
+	if err := downloadURLToPath(b.DownloadURL, tempFile); err != nil {
 		return err
 	}
 
@@ -297,7 +297,7 @@ func (b *BootstrapDownloader) DownloadToPath(bootstrapPath string) error {
 
 	// Extract the file to the specified path, we assume that the type of file
 	// is specified at the tail end of the URL.
-	return extractToPath(b.compressionType, tempFile, bootstrapPath)
+	return extractToPath(b.CompressionType, tempFile, bootstrapPath)
 
 }
 

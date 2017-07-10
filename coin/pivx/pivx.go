@@ -4,8 +4,8 @@ package pivx
 ////////////////////////////////////////////////////////////////////////////////
 
 import (
+	"errors"
 	"fmt"
-	"os/user"
 	"path/filepath"
 
 	"github.com/sabhiram/gomn/coin"
@@ -17,15 +17,19 @@ var ()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-//  basePath      string // path to the coins binaries
-// 	dataPath      string // path to data-directory for the coin
-// 	daemonBinName string // name of the coin daemon
-// 	queryBinName  string // name of the rpc interace binary
+type PIVX struct {
+	// PIVX specific data goes here.
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 
 func info(c *coin.Coin, binDir, dataDir string, args []string) error {
 	c.PrintCoinInfo(binDir, dataDir, "Info for PIVX:")
+	p, ok := c.GetOpaque().(*PIVX)
+	if !ok {
+		return errors.New("unable to get opaque object for pivx")
+	}
+	fmt.Printf("OPAQUE: %#v\n", p)
 	return nil
 }
 
@@ -52,49 +56,47 @@ func configure(c *coin.Coin, binDir, dataDir string, args []string) error {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-// homeDir gets the user's home directory
-func homeDir() string {
-	u, err := user.Current()
-	if err != nil {
-		return ""
-	}
-	return u.HomeDir
-}
-
 // Automatically register pivx with gomn if it is included.
 func init() {
-	// TODO: Move downloaders into coin structure ...
-	// Downloader for the wallet.
-	walletDownloader := coin.NewWalletDownloader(
-		"2.2.1",
-		"https://github.com/PIVX-Project/PIVX/releases/download/v2.2.1/pivx-2.2.1-x86_64-linux-gnu.tar.gz",
-		"tar.gz",
-		"401e238e1989b2efdc6d2ac0af3944f1277b2807f79319ad1366248e870e8fcf")
-
-	bootstrapDownloader := coin.NewBootstrapDownloader(
-		"https://github.com/PIVX-Project/PIVX/releases/download/v2.2.1/pivx-chain-684000-bootstrap.dat.zip",
-		"zip")
-
 	// Register the coin and any relevant functions.
 	coin.RegisterCoin(
+		////////////////////////////////////////////////////////////
 		// Register coin constants.
-		"pivx",                            // Name of the coin
-		"pivxd",                           // Daemon binaries
-		"pivx-cli",                        // Status binaries
-		filepath.Join(homeDir(), "pivx"),  // Default binary path
-		filepath.Join(homeDir(), ".pivx"), // Default data path
+		"pivx",                                 // Name of the coin
+		"pivxd",                                // Daemon binaries
+		"pivx-cli",                             // Status binaries
+		filepath.Join(coin.HomeDir(), "pivx"),  // Default wallet download path
+		filepath.Join(coin.HomeDir(), ".pivx"), // Default data path
 
-		// Register wallet / bootstrap fetchers.
-		walletDownloader,
-		bootstrapDownloader,
+		////////////////////////////////////////////////////////////
+		// Wallet download utility, if version is not set, this is a no-op.
+		// Additionally, if the shasum is not set, it will not be checked.
+		&coin.WalletDownloader{
+			Version:         "2.2.1",
+			DownloadURL:     "https://github.com/PIVX-Project/PIVX/releases/download/v2.2.1/pivx-2.2.1-x86_64-linux-gnu.tar.gz",
+			CompressionType: "tar.gz",
+			Sha256sum:       "401e238e1989b2efdc6d2ac0af3944f1277b2807f79319ad1366248e870e8fcf",
+		},
 
+		////////////////////////////////////////////////////////////
+		// Bootstrap download utility. If the URL is not set, this is a no-op.
+		&coin.BootstrapDownloader{
+			DownloadURL:     "https://github.com/PIVX-Project/PIVX/releases/download/v2.2.1/pivx-chain-684000-bootstrap.dat.zip",
+			CompressionType: "zip",
+		},
+
+		////////////////////////////////////////////////////////////
 		// Register coin functions.
 		map[string]coin.CoinFunc{
 			"info":      info,
 			"download":  download,
 			"bootstrap": bootstrap,
 			"configure": configure,
-		})
+		},
+
+		////////////////////////////////////////////////////////////
+		// Opaque interface for coin
+		&PIVX{})
 }
 
 ////////////////////////////////////////////////////////////////////////////////

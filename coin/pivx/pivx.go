@@ -17,19 +17,30 @@ var ()
 
 ////////////////////////////////////////////////////////////////////////////////
 
+// PIVX represents a collection of PIVX specific metadata (opaque from the
+// coin).
 type PIVX struct {
-	// PIVX specific data goes here.
+}
+
+// GetPIVX returns a valid instance of the opaque pivx object from the coin.
+func GetPIVX(c *coin.Coin) (*PIVX, error) {
+	p, ok := c.GetOpaque().(*PIVX)
+	if !ok {
+		return nil, errors.New("unable to get opaque object for pivx")
+	}
+	return p, nil
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
 func info(c *coin.Coin, binDir, dataDir string, args []string) error {
 	c.PrintCoinInfo(binDir, dataDir, "Info for PIVX:")
-	p, ok := c.GetOpaque().(*PIVX)
-	if !ok {
-		return errors.New("unable to get opaque object for pivx")
+	p, err := GetPIVX(c)
+	if err != nil {
+		return err
 	}
-	fmt.Printf("OPAQUE: %#v\n", p)
+
+	_ = p // p is the opaque part of the coin which stores PIVX info
 	return nil
 }
 

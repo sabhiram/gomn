@@ -33,8 +33,8 @@ func GetPIVX(c *coin.Coin) (*PIVX, error) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-func info(c *coin.Coin, binDir, dataDir string, args []string) error {
-	c.PrintCoinInfo(binDir, dataDir, "Info for PIVX:")
+func info(c *coin.Coin, args []string) error {
+	c.PrintCoinInfo("Info for PIVX:")
 	p, err := GetPIVX(c)
 	if err != nil {
 		return err
@@ -44,22 +44,22 @@ func info(c *coin.Coin, binDir, dataDir string, args []string) error {
 	return nil
 }
 
-func download(c *coin.Coin, binDir, dataDir string, args []string) error {
-	fmt.Printf("Got download for PIVX (%s, %s)\n", binDir, dataDir)
+func download(c *coin.Coin, args []string) error {
+	fmt.Printf("Got download for PIVX (%s, %s)\n", c.GetBinPath(), c.GetDataPath())
 	fmt.Printf("  with coin: %#v\n", c)
 	fmt.Printf("  args: %#v\n", args)
 	return nil
 }
 
-func bootstrap(c *coin.Coin, binDir, dataDir string, args []string) error {
-	fmt.Printf("Got bootstrap for PIVX (%s, %s)\n", binDir, dataDir)
+func bootstrap(c *coin.Coin, args []string) error {
+	fmt.Printf("Got bootstrap for PIVX (%s, %s)\n", c.GetBinPath(), c.GetDataPath())
 	fmt.Printf("  with coin: %#v\n", c)
 	fmt.Printf("  args: %#v\n", args)
 	return nil
 }
 
-func configure(c *coin.Coin, binDir, dataDir string, args []string) error {
-	fmt.Printf("Got configure for PIVX (%s, %s)\n", binDir, dataDir)
+func configure(c *coin.Coin, args []string) error {
+	fmt.Printf("Got configure for PIVX (%s, %s)\n", c.GetBinPath(), c.GetDataPath())
 	fmt.Printf("  with coin: %#v\n", c)
 	fmt.Printf("  args: %#v\n", args)
 	return nil

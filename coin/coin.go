@@ -15,7 +15,7 @@ import (
 
 ////////////////////////////////////////////////////////////////////////////////
 
-type CoinFunc func(c *Coin, binDir, dataDir string, args []string) error
+type CoinFunc func(c *Coin, args []string) error
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -26,8 +26,8 @@ type Coin struct {
 	name            string // name of the coin, used as the key for lookup
 	daemonBin       string // name of the daemon to launch the coin's node
 	statusBin       string // name of the binary to check status
-	defaultBinPath  string // path to where the bins will exist
-	defaultDataPath string // path to where the data will exist
+	defaultBinPath  string // default path where the bins will exist
+	defaultDataPath string // default path where the data will exist
 
 	// Coin specific downloaders (can be nil0)
 	walletDownloader    *WalletDownloader
@@ -38,6 +38,10 @@ type Coin struct {
 
 	// Opaque interface for the coin
 	opaque interface{}
+
+	// Computed dynamic variables
+	binPath  string // path where the bins will exist
+	dataPath string // path where the data will exist
 }
 
 // coins stores the currently registered coins that the system is aware of.
@@ -73,6 +77,10 @@ func RegisterCoin(
 
 		fnMap:  fnMap,
 		opaque: opaque,
+
+		// Computed properties will be set on each command invocation.
+		binPath:  "",
+		dataPath: "",
 	}
 
 	return nil
@@ -80,24 +88,35 @@ func RegisterCoin(
 
 ////////////////////////////////////////////////////////////////////////////////
 
+func (c *Coin) GetOpaque() interface{} {
+	return c.opaque
+}
+
+func (c *Coin) GetBinPath() string {
+	if c == nil {
+		return ""
+	}
+	return c.binPath
+}
+
+func (c *Coin) GetDataPath() string {
+	if c == nil {
+		return ""
+	}
+	return c.dataPath
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 // PrintCoinInfo is a common function that can be used by all coin
 // implementations to print common info for a given coin.
-func (c *Coin) PrintCoinInfo(binDir, dataDir, prefix string) error {
-	bd := c.defaultBinPath + " [default]"
-	if len(binDir) > 0 {
-		bd = binDir
-	}
-	bb := c.defaultDataPath + " [default]"
-	if len(dataDir) > 0 {
-		bb = dataDir
-	}
-
+func (c *Coin) PrintCoinInfo(prefix string) error {
 	fmt.Printf(`%s
   * Current Binary Directory: %s
   * Current Data Directory:   %s
   * Coin daemon binary:       %s
   * Coin status binary:       %s
-`, prefix, bd, bb, c.daemonBin, c.statusBin)
+`, prefix, c.binPath, c.dataPath, c.daemonBin, c.statusBin)
 
 	return nil
 }
@@ -116,10 +135,6 @@ func (c *Coin) DownloadBootstrap(dstPath string) error {
 		return errors.New("unspecified destination path")
 	}
 	return c.bootstrapDownloader.DownloadToPath(dstPath)
-}
-
-func (c *Coin) GetOpaque() interface{} {
-	return c.opaque
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -159,15 +174,28 @@ func Command(name, bins, data, cmd string, args []string) error {
 		return fmt.Errorf("invalid coin specified (%s)", name)
 	}
 
+	// Update the dynamic properties of the coin like the binary directory
+	// and the data directory for each coin. This will use the default versions
+	// unless we have an override. This allows us to invoke each CoinFunc more
+	// tersely and bundles all extra data into the Coin object.
+	c.binPath = c.defaultBinPath
+	if len(bins) > 0 {
+		c.binPath = bins
+	}
+	c.dataPath = c.defaultDataPath
+	if len(data) > 0 {
+		c.dataPath = data
+	}
+
+	// Find and invoke the appropriate coin func (if valid).
 	fn, ok := c.fnMap[cmd]
 	if !ok {
 		return fmt.Errorf("invalid command specified (%s)", cmd)
 	}
-
 	if fn == nil {
 		fmt.Printf("[%s] %s is a no-op. Doing nothing!\n", name, cmd)
 	}
-	return fn(c, bins, data, args)
+	return fn(c, args)
 }
 
 ////////////////////////////////////////////////////////////////////////////////

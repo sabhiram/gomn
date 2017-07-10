@@ -114,7 +114,6 @@ func init() {
 	flag.StringVar(&CLI.coin, "coin", "", "currency you are setting up a mn for")
 	flag.StringVar(&CLI.binPath, "bins", "", "path where the coin's binaries should reside (optional)")
 	flag.StringVar(&CLI.dataPath, "data", "", "path where the blockchain data should reside (optional)")
-
 	flag.Parse()
 
 	// Normalize and fix-up arguments.

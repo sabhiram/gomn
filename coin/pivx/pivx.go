@@ -25,9 +25,7 @@ var ()
 ////////////////////////////////////////////////////////////////////////////////
 
 func info(c *coin.Coin, binDir, dataDir string, args []string) error {
-	fmt.Printf("Got info for PIVX (%s, %s)\n", binDir, dataDir)
-	fmt.Printf("  with coin: %#v\n", c)
-	fmt.Printf("  args: %#v\n", args)
+	c.PrintCoinInfo(binDir, dataDir, "Info for PIVX:")
 	return nil
 }
 

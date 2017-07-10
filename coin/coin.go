@@ -80,6 +80,30 @@ func RegisterCoin(
 
 ////////////////////////////////////////////////////////////////////////////////
 
+// PrintCoinInfo is a common function that can be used by all coin
+// implementations to print common info for a given coin.
+func (c *Coin) PrintCoinInfo(binDir, dataDir, prefix string) error {
+	bd := c.defaultBinPath + " [default]"
+	if len(binDir) > 0 {
+		bd = binDir
+	}
+	bb := c.defaultDataPath + " [default]"
+	if len(dataDir) > 0 {
+		bb = dataDir
+	}
+
+	fmt.Printf(`%s
+  * Current Binary Directory: %s
+  * Current Data Directory:   %s
+  * Coin daemon binary:       %s
+  * Coin status binary:       %s
+`, prefix, bd, bb, c.daemonBin, c.statusBin)
+
+	return nil
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 func (c *Coin) DownloadWallet(dstPath string) error {
 	if len(dstPath) == 0 {
 		return errors.New("unspecified destination path")

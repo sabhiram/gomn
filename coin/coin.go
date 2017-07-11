@@ -15,6 +15,12 @@ import (
 
 ////////////////////////////////////////////////////////////////////////////////
 
+var (
+	emptyMap = map[string]string{}
+)
+
+////////////////////////////////////////////////////////////////////////////////
+
 type CoinFunc func(c *Coin, args []string) error
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -29,10 +35,11 @@ type CoinState struct {
 	statusBinPath   string // populated if the status binary exists at the specified path
 	statusBinExists bool   // true if the above file exists
 
-	dataPath         string // path where the data will exist
-	dataPathExists   bool   // true if the above path exists
-	configFilePath   string // path to config file
-	configFileExists bool   // true if the above file exists
+	dataPath         string            // path where the data will exist
+	dataPathExists   bool              // true if the above path exists
+	configFilePath   string            // path to config file
+	configFileExists bool              // true if the above file exists
+	config           map[string]string // k-v map of `coin`.conf file
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -41,8 +48,9 @@ type CoinState struct {
 // a given coin's masternode.
 type Coin struct {
 	// Coin specific constants
-	name string // name of the coin, used as the key for lookup
-	port int    // port number for the coins peering
+	name    string // name of the coin, used as the key for lookup
+	port    int    // port number for the coins peering
+	rpcPort int    // port number for RPC comm
 
 	daemonBin       string // name of the daemon to launch the coin's node
 	statusBin       string // name of the binary to check status
@@ -94,6 +102,17 @@ func (c *Coin) UpdateDynamic(bins, data string) error {
 	c.state.dataPathExists = DirExists(c.state.dataPath)
 	c.state.configFilePath = filepath.Join(c.state.dataPath, c.configFile)
 	c.state.configFileExists = FileExists(c.state.configFilePath)
+	c.state.config = emptyMap
+
+	////////////////////////////////////////////////////////////
+
+	if c.state.configFileExists {
+		m, err := LoadConfFile(c.state.configFilePath)
+		if err != nil {
+			return err
+		}
+		c.state.config = m
+	}
 
 	////////////////////////////////////////////////////////////
 
@@ -134,6 +153,13 @@ func (c *Coin) GetPort() int {
 	return c.port
 }
 
+func (c *Coin) GetConfig() map[string]string {
+	if c == nil {
+		return emptyMap
+	}
+	return c.state.config
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 // PrintCoinInfo is a common function that can be used by all coin
@@ -160,6 +186,8 @@ func (c *Coin) PrintCoinInfo(prefix string) error {
 		phelper(c.state.statusBinPath, c.state.statusBinExists),
 		phelper(c.state.dataPath, c.state.dataPathExists),
 		phelper(c.state.configFilePath, c.state.configFileExists))
+
+	fmt.Printf("CONFIG: %#v\n", c.GetConfig())
 
 	return nil
 }

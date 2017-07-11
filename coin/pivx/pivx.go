@@ -45,7 +45,6 @@ func info(c *coin.Coin, args []string) error {
 	if err != nil {
 		return err
 	}
-
 	_ = p // p is the opaque part of the coin which stores PIVX info
 	return nil
 }
@@ -103,6 +102,7 @@ func init() {
 		// Register coin constants.
 		"pivx",      // Name of the coin
 		51472,       // PIVX port
+		51473,       // RPC port
 		"pivxd",     // Daemon binaries
 		"pivx-cli",  // Status binaries
 		"pivx.conf", // Coin config file

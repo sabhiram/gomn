@@ -18,7 +18,7 @@ var (
 ////////////////////////////////////////////////////////////////////////////////
 
 func RegisterCoin(
-	name string, port int,
+	name string, port, rpcPort int,
 	daemonBin, statusBin, configFile string,
 	defBinPath, defDataPath string,
 	wdl *WalletDownloader, bdl *BootstrapDownloader,
@@ -32,8 +32,9 @@ func RegisterCoin(
 	}
 
 	coins[name] = &Coin{
-		name: name,
-		port: port,
+		name:    name,
+		port:    port,
+		rpcPort: rpcPort,
 
 		daemonBin:       daemonBin,
 		statusBin:       statusBin,

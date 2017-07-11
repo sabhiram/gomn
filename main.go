@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/sabhiram/gomn/coin"
+	"github.com/sabhiram/gomn/version"
 
 	// Include any coins that we want to manage mns for using gomn
 	// we can think of these as "plugins".
@@ -17,7 +18,7 @@ import (
 ////////////////////////////////////////////////////////////////////////////////
 
 var (
-	GoMnVersion = `0.0.1`
+	GoMnVersion = version.VersionString
 	GoMnHelp    = `
 GoMn Usage:
 ===========

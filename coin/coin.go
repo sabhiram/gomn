@@ -41,7 +41,9 @@ type CoinState struct {
 // a given coin's masternode.
 type Coin struct {
 	// Coin specific constants
-	name            string // name of the coin, used as the key for lookup
+	name string // name of the coin, used as the key for lookup
+	port int    // port number for the coins peering
+
 	daemonBin       string // name of the daemon to launch the coin's node
 	statusBin       string // name of the binary to check status
 	configFile      string // name of the config file in the data directory
@@ -116,6 +118,20 @@ func (c *Coin) GetDataPath() string {
 		return ""
 	}
 	return c.state.dataPath
+}
+
+func (c *Coin) GetConfFilePath() string {
+	if c == nil || c.state == nil {
+		return ""
+	}
+	return c.state.configFilePath
+}
+
+func (c *Coin) GetPort() int {
+	if c == nil {
+		return -1
+	}
+	return c.port
 }
 
 ////////////////////////////////////////////////////////////////////////////////

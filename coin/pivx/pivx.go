@@ -5,6 +5,7 @@ package pivx
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"path/filepath"
 
@@ -13,7 +14,12 @@ import (
 
 ////////////////////////////////////////////////////////////////////////////////
 
-var ()
+var (
+	CLI = struct {
+		ip   string
+		mnPK string
+	}{}
+)
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -55,10 +61,36 @@ func bootstrap(c *coin.Coin, args []string) error {
 }
 
 func configure(c *coin.Coin, args []string) error {
-	fmt.Printf("Got configure for PIVX (%s, %s)\n", c.GetBinPath(), c.GetDataPath())
-	fmt.Printf("  with coin: %#v\n", c)
-	fmt.Printf("  args: %#v\n", args)
-	return nil
+	fmt.Printf("Attempting to configure %s\n", c.GetConfFilePath())
+	fs := flag.NewFlagSet("pivx-configure", flag.ContinueOnError)
+	fs.StringVar(&CLI.ip, "ip", "", "masternode's fixed IP (required)")
+	fs.StringVar(&CLI.mnPK, "mnpkey", "", "masternode's private key (required)")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+
+	// TODO: Validate that this is an IPV4/V6 IP
+	if len(CLI.ip) == 0 {
+		return errors.New("np IP specified (use '--ip A.B.C.D'")
+	}
+	if len(CLI.mnPK) == 0 {
+		return errors.New("no masternode private-key specified")
+	}
+
+	return coin.NewConfFile(c.GetConfFilePath(), map[string]string{
+		"rpcuser":            coin.GetRandomHex(32),
+		"rpcpassword":        coin.GetRandomHex(64),
+		"rpcallowip":         "127.0.0.1",
+		"listen":             "1",
+		"server":             "1",
+		"daemon":             "1",
+		"#masternode":        "1",
+		"maxconnections":     "256",
+		"bind":               "0.0.0.0",
+		"externalip":         CLI.ip,
+		"masternodeaddr":     fmt.Sprintf("%s:%d", CLI.ip, c.GetPort()),
+		"#masternodeprivkey": CLI.mnPK,
+	})
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -70,12 +102,13 @@ func init() {
 		////////////////////////////////////////////////////////////
 		// Register coin constants.
 		"pivx",      // Name of the coin
+		51472,       // PIVX port
 		"pivxd",     // Daemon binaries
 		"pivx-cli",  // Status binaries
 		"pivx.conf", // Coin config file
 
-		filepath.Join(coin.HomeDir(), "pivx", "pivx-2.2.1/bin"), // Default wallet download path
-		filepath.Join(coin.HomeDir(), ".pivx"),                  // Default data path
+		filepath.Join(coin.HomeDir(), "pivx", "pivx-2.2.1", "bin"), // Default binary path
+		filepath.Join(coin.HomeDir(), ".pivx"),                     // Default data path
 
 		////////////////////////////////////////////////////////////
 		// Wallet download utility, if version is not set, this is a no-op.

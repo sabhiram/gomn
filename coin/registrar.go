@@ -18,7 +18,8 @@ var (
 ////////////////////////////////////////////////////////////////////////////////
 
 func RegisterCoin(
-	name, daemonBin, statusBin, configFile string,
+	name string, port int,
+	daemonBin, statusBin, configFile string,
 	defBinPath, defDataPath string,
 	wdl *WalletDownloader, bdl *BootstrapDownloader,
 	fnMap map[string]CoinFunc, opaque interface{}) error {
@@ -31,7 +32,9 @@ func RegisterCoin(
 	}
 
 	coins[name] = &Coin{
-		name:            name,
+		name: name,
+		port: port,
+
 		daemonBin:       daemonBin,
 		statusBin:       statusBin,
 		configFile:      configFile,

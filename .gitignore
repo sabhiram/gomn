@@ -1,5 +1,6 @@
 # mnwatch ignore file
 gomn
+README-local.md
 
 # Binaries for programs and plugins
 *.exe

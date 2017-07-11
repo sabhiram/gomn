@@ -45,17 +45,13 @@ func info(c *coin.Coin, args []string) error {
 }
 
 func download(c *coin.Coin, args []string) error {
-	fmt.Printf("Got download for PIVX (%s, %s)\n", c.GetBinPath(), c.GetDataPath())
-	fmt.Printf("  with coin: %#v\n", c)
-	fmt.Printf("  args: %#v\n", args)
-	return nil
+	fmt.Printf("Attempting to download PIVX wallet into %s\n", c.GetBinPath())
+	return c.DownloadWallet()
 }
 
 func bootstrap(c *coin.Coin, args []string) error {
-	fmt.Printf("Got bootstrap for PIVX (%s, %s)\n", c.GetBinPath(), c.GetDataPath())
-	fmt.Printf("  with coin: %#v\n", c)
-	fmt.Printf("  args: %#v\n", args)
-	return nil
+	fmt.Printf("Attempting to download PIVX data into %s\n", c.GetDataPath())
+	return c.DownloadBootstrap()
 }
 
 func configure(c *coin.Coin, args []string) error {
@@ -73,11 +69,13 @@ func init() {
 	coin.RegisterCoin(
 		////////////////////////////////////////////////////////////
 		// Register coin constants.
-		"pivx",                                 // Name of the coin
-		"pivxd",                                // Daemon binaries
-		"pivx-cli",                             // Status binaries
-		filepath.Join(coin.HomeDir(), "pivx"),  // Default wallet download path
-		filepath.Join(coin.HomeDir(), ".pivx"), // Default data path
+		"pivx",     // Name of the coin
+		"pivxd",    // Daemon binaries
+		"pivx-cli", // Status binaries
+		// "pivx.conf", // Coin config file
+
+		filepath.Join(coin.HomeDir(), "pivx", "pivx-2.2.1/bin"), // Default wallet download path
+		filepath.Join(coin.HomeDir(), ".pivx"),                  // Default data path
 
 		////////////////////////////////////////////////////////////
 		// Wallet download utility, if version is not set, this is a no-op.
@@ -92,7 +90,7 @@ func init() {
 		////////////////////////////////////////////////////////////
 		// Bootstrap download utility. If the URL is not set, this is a no-op.
 		&coin.BootstrapDownloader{
-			DownloadURL:     "https://github.com/PIVX-Project/PIVX/releases/download/v2.2.1/pivx-chain-684000-bootstrap.dat.zip",
+			DownloadURL:     "https://github.com/PIVX-Project/PIVX/releases/download/v2.2.1/pivx-chain-721000-bootstrap.dat.zip",
 			CompressionType: "zip",
 		},
 

@@ -203,6 +203,7 @@ type WalletDownloader struct {
 	DownloadURL     string // url to fetch the wallet
 	CompressionType string // type of compression ["tar.gz", "zip", "none"]
 	Sha256sum       string // shasum for the download
+	PathToBins      string // path from destination -> binary directory
 }
 
 // NewWalletDownloader returns a new instance of a wallet downloader.

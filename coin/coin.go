@@ -22,15 +22,17 @@ type CoinFunc func(c *Coin, args []string) error
 // CoinState represents a collection of dynamic coin properties that are only
 // known at run-time.
 type CoinState struct {
-	binPath             string // path where the bins will exist
-	binPathExists       bool   // true if the above path exists
-	daemonBinPath       string // populated if the daemon binary exists at the specified path
-	daemonBinPathExists bool   // true if the above path exists
-	statusBinPath       string // populated if the status binary exists at the specified path
-	statusBinPathExists bool   // true if the above path exists
+	binPath         string // path where the bins will exist
+	binPathExists   bool   // true if the above path exists
+	daemonBinPath   string // populated if the daemon binary exists at the specified path
+	daemonBinExists bool   // true if the above file exists
+	statusBinPath   string // populated if the status binary exists at the specified path
+	statusBinExists bool   // true if the above file exists
 
-	dataPath       string // path where the data will exist
-	dataPathExists bool   // true if the above path exists
+	dataPath         string // path where the data will exist
+	dataPathExists   bool   // true if the above path exists
+	configFilePath   string // path to config file
+	configFileExists bool   // true if the above file exists
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -42,6 +44,7 @@ type Coin struct {
 	name            string // name of the coin, used as the key for lookup
 	daemonBin       string // name of the daemon to launch the coin's node
 	statusBin       string // name of the binary to check status
+	configFile      string // name of the config file in the data directory
 	defaultBinPath  string // default path where the bins will exist
 	defaultDataPath string // default path where the data will exist
 
@@ -76,8 +79,8 @@ func (c *Coin) UpdateDynamic(bins, data string) error {
 	c.state.binPathExists = DirExists(c.state.binPath)
 	c.state.daemonBinPath = filepath.Join(c.state.binPath, c.daemonBin)
 	c.state.statusBinPath = filepath.Join(c.state.binPath, c.statusBin)
-	c.state.daemonBinPathExists = FileExists(c.state.daemonBinPath)
-	c.state.statusBinPathExists = FileExists(c.state.statusBinPath)
+	c.state.daemonBinExists = FileExists(c.state.daemonBinPath)
+	c.state.statusBinExists = FileExists(c.state.statusBinPath)
 
 	////////////////////////////////////////////////////////////
 
@@ -87,6 +90,8 @@ func (c *Coin) UpdateDynamic(bins, data string) error {
 	}
 
 	c.state.dataPathExists = DirExists(c.state.dataPath)
+	c.state.configFilePath = filepath.Join(c.state.dataPath, c.configFile)
+	c.state.configFileExists = FileExists(c.state.configFilePath)
 
 	////////////////////////////////////////////////////////////
 
@@ -127,16 +132,18 @@ func (c *Coin) PrintCoinInfo(prefix string) error {
 	}
 
 	fmt.Printf(`%s
-  * Current Binary Directory: %s
-  * Coin daemon binary:       %s
-  * Coin status binary:       %s
-  * Current Data Directory:   %s
+  * Binary Directory:   %s
+  * Coin daemon binary: %s
+  * Coin status binary: %s
+  * Data Directory:     %s
+  * Config File:        %s
 `,
 		prefix,
 		phelper(c.state.binPath, c.state.binPathExists),
-		phelper(c.state.daemonBinPath, c.state.daemonBinPathExists),
-		phelper(c.state.statusBinPath, c.state.statusBinPathExists),
-		phelper(c.state.dataPath, c.state.dataPathExists))
+		phelper(c.state.daemonBinPath, c.state.daemonBinExists),
+		phelper(c.state.statusBinPath, c.state.statusBinExists),
+		phelper(c.state.dataPath, c.state.dataPathExists),
+		phelper(c.state.configFilePath, c.state.configFileExists))
 
 	return nil
 }
@@ -145,8 +152,8 @@ func (c *Coin) PrintCoinInfo(prefix string) error {
 
 func (c *Coin) DownloadWallet() error {
 	if c.state.binPathExists &&
-		c.state.daemonBinPathExists &&
-		c.state.statusBinPathExists {
+		c.state.daemonBinExists &&
+		c.state.statusBinExists {
 		return errors.New("wallet binary already exists (TODO: Add --force option)")
 	}
 	return c.walletDownloader.DownloadToPath(c.state.binPath)

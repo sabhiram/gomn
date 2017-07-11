@@ -69,10 +69,10 @@ func init() {
 	coin.RegisterCoin(
 		////////////////////////////////////////////////////////////
 		// Register coin constants.
-		"pivx",     // Name of the coin
-		"pivxd",    // Daemon binaries
-		"pivx-cli", // Status binaries
-		// "pivx.conf", // Coin config file
+		"pivx",      // Name of the coin
+		"pivxd",     // Daemon binaries
+		"pivx-cli",  // Status binaries
+		"pivx.conf", // Coin config file
 
 		filepath.Join(coin.HomeDir(), "pivx", "pivx-2.2.1/bin"), // Default wallet download path
 		filepath.Join(coin.HomeDir(), ".pivx"),                  // Default data path

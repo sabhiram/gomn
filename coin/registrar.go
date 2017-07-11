@@ -18,7 +18,7 @@ var (
 ////////////////////////////////////////////////////////////////////////////////
 
 func RegisterCoin(
-	name, daemonBin, statusBin string,
+	name, daemonBin, statusBin, configFile string,
 	defBinPath, defDataPath string,
 	wdl *WalletDownloader, bdl *BootstrapDownloader,
 	fnMap map[string]CoinFunc, opaque interface{}) error {
@@ -34,6 +34,7 @@ func RegisterCoin(
 		name:            name,
 		daemonBin:       daemonBin,
 		statusBin:       statusBin,
+		configFile:      configFile,
 		defaultBinPath:  defBinPath,
 		defaultDataPath: defDataPath,
 

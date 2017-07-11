@@ -77,7 +77,7 @@ func configure(c *coin.Coin, args []string) error {
 		return errors.New("no masternode private-key specified")
 	}
 
-	return coin.NewConfFile(c.GetConfFilePath(), map[string]string{
+	return coin.CreateConfFile(c.GetConfFilePath(), map[string]string{
 		"rpcuser":            coin.GetRandomHex(32),
 		"rpcpassword":        coin.GetRandomHex(64),
 		"rpcallowip":         "127.0.0.1",

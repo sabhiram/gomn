@@ -204,8 +204,6 @@ func (c *Coin) PrintCoinInfo(prefix string) error {
 		phelper(c.state.dataPath, c.state.dataPathExists),
 		phelper(c.state.configFilePath, c.state.configFileExists))
 
-	fmt.Printf("CONFIG: %#v\n", c.GetConfig())
-
 	return nil
 }
 

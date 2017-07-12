@@ -7,6 +7,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"path/filepath"
 
 	"github.com/sabhiram/gomn/coin"
@@ -92,6 +93,18 @@ func configure(c *coin.Coin, args []string) error {
 	})
 }
 
+func getinfo(c *coin.Coin, args []string) error {
+	fmt.Printf("Attempting to fetch blockchain info for PIVX\n")
+	rsp, err := c.DoJSONRPCCommand("getinfo", nil)
+	if err != nil {
+		return err
+	}
+
+	response, err := ioutil.ReadAll(rsp.Body)
+	fmt.Printf("GOT RESPONSE: %s\n", response)
+	return err
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 // Automatically register pivx with gomn if it is included.
@@ -134,6 +147,7 @@ func init() {
 			"download":  download,
 			"bootstrap": bootstrap,
 			"configure": configure,
+			"getinfo":   getinfo,
 		},
 
 		////////////////////////////////////////////////////////////

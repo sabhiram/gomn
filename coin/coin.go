@@ -153,11 +153,28 @@ func (c *Coin) GetPort() int {
 	return c.port
 }
 
+func (c *Coin) GetRPCPort() int {
+	if c == nil {
+		return -1
+	}
+	return c.rpcPort
+}
+
 func (c *Coin) GetConfig() map[string]string {
 	if c == nil {
 		return emptyMap
 	}
 	return c.state.config
+}
+
+// GetConfigValue returns the value for a given key in the config file.  Returns
+// an empty string if the key is not found.
+func (c *Coin) GetConfigValue(key string) string {
+	m := c.GetConfig()
+	if v, ok := m[key]; ok {
+		return v
+	}
+	return ""
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -1,6 +1,17 @@
 package coin
 
 ////////////////////////////////////////////////////////////////////////////////
+/*
+
+TODO:
+
+	Other coins might have a websocket based RPC protocol (bitcoin, dash(?)),
+	and it would be appropriate for the RPC access to be abstracted behind an
+	interface which selects the type of transport based on the coin's config
+	parameters as it is being registered.
+
+*/
+////////////////////////////////////////////////////////////////////////////////
 
 import (
 	"bytes"
@@ -10,12 +21,16 @@ import (
 	"sync/atomic"
 )
 
+////////////////////////////////////////////////////////////////////////////////
+
 var (
-	rpcId int64
+	rpcId int64 // Atomic counter for JSON RPC unique ID
 )
 
 ////////////////////////////////////////////////////////////////////////////////
 
+// DoJSONRPCCommand accepts a `method` and a list of values in `params` which
+// will be sent over JSON RPC to the corresponding coin's daemon.
 func (c *Coin) DoJSONRPCCommand(method string, params []interface{}) (*http.Response, error) {
 	url := fmt.Sprintf("http://%s:%d", c.GetConfigValue("rpcallowip"), c.GetRPCPort())
 

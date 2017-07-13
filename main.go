@@ -52,7 +52,6 @@ COMMANDS:
     download     Get a copy of the coin's wallet to the bin path
     bootstrap    Fetch the bootstrap bundle (if available) to the data path
     configure    Configure the 'coin'.conf file for mn duty
-    ...          Other commands :)
 `
 
 	CLI = struct {

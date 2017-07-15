@@ -1,4 +1,4 @@
-# mnwatch
+# gomn
 
 A masternode watcher and alerting tool.
 

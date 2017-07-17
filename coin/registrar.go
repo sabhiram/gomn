@@ -20,7 +20,7 @@ var (
 func RegisterCoin(
 	name string, port, rpcPort int,
 	daemonBin, statusBin, configFile string,
-	defBinPath, defDataPath string,
+	defWalletPath, defBinSubPath, defDataPath string,
 	wdl *WalletDownloader, bdl *BootstrapDownloader,
 	fnMap map[string]CoinFunc, opaque interface{}) error {
 
@@ -36,11 +36,13 @@ func RegisterCoin(
 		port:    port,
 		rpcPort: rpcPort,
 
-		daemonBin:       daemonBin,
-		statusBin:       statusBin,
-		configFile:      configFile,
-		defaultBinPath:  defBinPath,
-		defaultDataPath: defDataPath,
+		daemonBin:  daemonBin,
+		statusBin:  statusBin,
+		configFile: configFile,
+
+		defaultWalletPath: defWalletPath,
+		defaultBinSubPath: defBinSubPath,
+		defaultDataPath:   defDataPath,
 
 		walletDownloader:    wdl,
 		bootstrapDownloader: bdl,
@@ -83,7 +85,7 @@ func IsRegistered(name string) bool {
 // Command executes a given coin's (specified by `name`), `cmd` function
 // if one was registered. If the function was nil, then it has no implementation
 // and we do nothing.  If the command was not found we return an error.
-func Command(name, bins, data, cmd string, args []string) error {
+func Command(name, wallet, bins, data, cmd string, args []string) error {
 	coinsLock.Lock()
 	defer coinsLock.Unlock()
 
@@ -96,7 +98,7 @@ func Command(name, bins, data, cmd string, args []string) error {
 	// and the data directory for each coin. This will use the default versions
 	// unless we have an override. This allows us to invoke each CoinFunc more
 	// tersely and bundles all extra data into the Coin object.
-	c.UpdateDynamic(bins, data)
+	c.UpdateDynamic(wallet, bins, data)
 
 	// Find and invoke the appropriate coin func (if valid).
 	fn, ok := c.fnMap[cmd]

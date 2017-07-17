@@ -16,6 +16,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/sabhiram/gomn/cmdargs"
 )
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -68,6 +70,8 @@ func downloadURLToPath(url string, filepath string) error {
 	return err
 }
 
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
 // extractTarGzip extracts a given source file path into a destination path
@@ -219,14 +223,26 @@ func NewWalletDownloader(v, url, ct, sha string) *WalletDownloader {
 // DownloadToPath grabs the underlying wallet file, and checks its sha256sum
 // to verify that it is indeed the expected file. If so, it extracts the
 // contents to the appropriate
-func (w *WalletDownloader) DownloadToPath(walletPath string) error {
-	log.Printf("  Fetching wallet from %s into %s\n", w.DownloadURL, walletPath)
+func (w *WalletDownloader) DownloadToPath(walletPath string, override *cmdargs.Download) error {
+	sourceURL := w.DownloadURL
+	if len(override.URL) > 0 {
+		sourceURL = override.URL
+	}
+	compressionType := w.CompressionType
+	if len(override.Type) > 0 {
+		compressionType = override.Type
+	}
+	expShaSum := w.Sha256sum
+	if len(override.ShaSum) > 0 {
+		expShaSum = override.ShaSum
+	}
+	log.Printf("  Fetching wallet from %s into %s\n", sourceURL, walletPath)
 
 	// Fetch the file into a temporary file
 	tempFile := filepath.Join(os.TempDir(), "walletdl")
 
 	// Try to fetch the wallet to the temporary file
-	if err := downloadURLToPath(w.DownloadURL, tempFile); err != nil {
+	if err := downloadURLToPath(sourceURL, tempFile); err != nil {
 		return err
 	}
 
@@ -249,13 +265,13 @@ func (w *WalletDownloader) DownloadToPath(walletPath string) error {
 		t = append(t, b)
 	}
 	shasum := hex.EncodeToString(t)
-	if strings.ToLower(shasum) != strings.ToLower(w.Sha256sum) {
-		return fmt.Errorf("shasum for download (%s) does not match expected (%s)", shasum, w.Sha256sum)
+	if strings.ToLower(shasum) != strings.ToLower(expShaSum) {
+		return fmt.Errorf("shasum for download (%s) does not match expected (%s)", shasum, expShaSum)
 	}
 
 	// Extract the file to the specified path, we assume that the type of file
 	// is specified at the tail end of the URL.
-	return extractToPath(w.CompressionType, tempFile, walletPath)
+	return extractToPath(compressionType, tempFile, walletPath)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -277,14 +293,22 @@ func NewBootstrapDownloader(url, ctype string) *BootstrapDownloader {
 
 // DownloadToPath grabs a archive from a web url defined in `b` and extracts
 // the file if needed into `bootstrapPath`.
-func (b *BootstrapDownloader) DownloadToPath(bootstrapPath string) error {
-	log.Printf("  Fetching bootstrap from %s into %s\n", b.DownloadURL, bootstrapPath)
+func (b *BootstrapDownloader) DownloadToPath(bootstrapPath string, override *cmdargs.Bootstrap) error {
+	sourceURL := b.DownloadURL
+	if len(override.URL) > 0 {
+		sourceURL = override.URL
+	}
+	compressionType := b.CompressionType
+	if len(override.Type) > 0 {
+		compressionType = override.Type
+	}
+	log.Printf("  Fetching bootstrap from %s into %s\n", sourceURL, bootstrapPath)
 
 	// Fetch the file into a temporary file
 	tempFile := filepath.Join(os.TempDir(), "bootstrapdl")
 
 	// Try to fetch the wallet to the temporary file
-	if err := downloadURLToPath(b.DownloadURL, tempFile); err != nil {
+	if err := downloadURLToPath(sourceURL, tempFile); err != nil {
 		return err
 	}
 
@@ -298,7 +322,7 @@ func (b *BootstrapDownloader) DownloadToPath(bootstrapPath string) error {
 
 	// Extract the file to the specified path, we assume that the type of file
 	// is specified at the tail end of the URL.
-	return extractToPath(b.CompressionType, tempFile, bootstrapPath)
+	return extractToPath(compressionType, tempFile, bootstrapPath)
 
 }
 

@@ -36,7 +36,8 @@ OPTIONS:
 
     --coin    Specify the coin [Ex: "pivx", "dash", ...]
     --data    Specify the data path for the coin, if empty use coin default
-    --bins    Specify the binary path for the coin, if empty use coin default
+    --wallet  Specify where the wallet binaries will be fetched
+    --bins    Specify the subpath within the wallet where the bins exist
 
 Not all 'COMMAND's require the above options to be set, however most that query
 or setup a node for a given coin will require them.
@@ -44,19 +45,39 @@ or setup a node for a given coin will require them.
 COMMANDS:
 =========
 
+  gomn status:
+  ------------
     help         Print this help menu, same as running 'gomn' with no command
     version      Print the application's version information
     list         List coins that gomn is aware of
 
-    info         Get info on a given coin, effectively run the 'getinfo' RPC
-    download     Get a copy of the coin's wallet to the bin path
-    bootstrap    Fetch the bootstrap bundle (if available) to the data path
-    configure    Configure the 'coin'.conf file for mn duty
+  coin specific commands:
+  -----------------------
+    info         Get info on a given coin, effectively run the 'getinfo' RPC.
+
+    download     Get a copy of the coin's wallet to the bin path. To override
+                 the coin specified defaults, use '--url' to specify a source
+                 url to fetch the wallet from and '--type' to specify the type
+                 of compression (if any).  If you have a shasum to verify the
+                 download against, specify that with '--shasum'.
+
+    bootstrap    Fetch the bootstrap bundle (if available) to the data path. To
+                 override the coin specified defaults, use '--url' to specify a
+                 source url to fetch the bootstrap from, and use '--type' to
+                 specify the type of compression (if any).
+
+    configure    Configure the 'coin'.conf file for mn duty.  You must specify
+
+    monitor      Once all other things are setup, this will monitor your MN.
+                 If '--callbackurl' is specified, updates are sent to the URL
+                 as the node's state changes.
+
 `
 
 	CLI = struct {
 		coin     string   // Name of the coin we are operating on
-		binPath  string   // Path to coin's binary directory (empty => coin default)
+		wallet   string   // base path to where wallet binaries will be extracted  (empty => coin default)
+		binPath  string   // sub-Path to coin's binary directory (empty => coin default)
 		dataPath string   // Path to coin's data directory (empty => coin default)
 		args     []string // Rest of the command line, args[0] is the command
 	}{}
@@ -97,7 +118,7 @@ func main() {
 			log.Printf("No coins registered!\n\n")
 		}
 	default:
-		if err := coin.Command(CLI.coin, CLI.binPath, CLI.dataPath, cmd, opts); err != nil {
+		if err := coin.Command(CLI.coin, CLI.wallet, CLI.binPath, CLI.dataPath, cmd, opts); err != nil {
 			fatalOnError(err)
 		}
 	}
@@ -112,6 +133,7 @@ func init() {
 
 	// CLI Argument parsing.
 	flag.StringVar(&CLI.coin, "coin", "", "currency you are setting up a mn for")
+	flag.StringVar(&CLI.wallet, "wallet", "", "base path to where wallet binaries will be extracted (optional)")
 	flag.StringVar(&CLI.binPath, "bins", "", "path where the coin's binaries should reside (optional)")
 	flag.StringVar(&CLI.dataPath, "data", "", "path where the blockchain data should reside (optional)")
 	flag.Parse()

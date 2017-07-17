@@ -10,17 +10,13 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
+	"github.com/sabhiram/gomn/cmdargs"
 	"github.com/sabhiram/gomn/coin"
 )
 
 ////////////////////////////////////////////////////////////////////////////////
 
-var (
-	CLI = struct {
-		ip   string
-		mnPK string
-	}{}
-)
+var ()
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -52,29 +48,51 @@ func info(c *coin.Coin, args []string) error {
 
 func download(c *coin.Coin, args []string) error {
 	fmt.Printf("Attempting to download PIVX wallet into %s\n", c.GetBinPath())
-	return c.DownloadWallet()
+
+	// Parse command arguments
+	fs := flag.NewFlagSet("pivx-download", flag.ContinueOnError)
+	cargs := &cmdargs.Download{}
+	fs.StringVar(&cargs.URL, "url", "", "override the wallet download URL")
+	fs.StringVar(&cargs.Type, "type", "", "override the wallet download type (compression)")
+	fs.StringVar(&cargs.ShaSum, "shasum", "", "override the wallet's sha256sum")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	return c.DownloadWallet(args, cargs)
 }
 
 func bootstrap(c *coin.Coin, args []string) error {
-	fmt.Printf("Attempting to download PIVX data into %s\n", c.GetDataPath())
-	return c.DownloadBootstrap()
+	fmt.Printf("Attempting to bootstrap PIVX data into %s\n", c.GetDataPath())
+
+	// Parse command arguments
+	fs := flag.NewFlagSet("pivx-bootstrap", flag.ContinueOnError)
+	cargs := &cmdargs.Bootstrap{}
+	fs.StringVar(&cargs.URL, "url", "", "override the bootstrap URL")
+	fs.StringVar(&cargs.Type, "type", "", "override the bootstrap type (compression)")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	return c.DownloadBootstrap(args, cargs)
 }
 
 func configure(c *coin.Coin, args []string) error {
 	fmt.Printf("Attempting to configure %s\n", c.GetConfFilePath())
+
+	// Parse command arguments
 	fs := flag.NewFlagSet("pivx-configure", flag.ContinueOnError)
-	fs.StringVar(&CLI.ip, "ip", "", "masternode's fixed IP (required)")
-	fs.StringVar(&CLI.mnPK, "mnpkey", "", "masternode's private key (required)")
+	cargs := &cmdargs.Configure{}
+	fs.StringVar(&cargs.IP, "ip", "", "masternode's fixed IP (required)")
+	fs.StringVar(&cargs.MnPK, "mnpkey", "", "masternode's private key (required)")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
 
 	// TODO: Validate that this is an IPV4/V6 IP
-	if len(CLI.ip) == 0 {
+	if len(cargs.IP) == 0 {
 		return errors.New("np IP specified (use '--ip A.B.C.D'")
 	}
-	if len(CLI.mnPK) == 0 {
-		return errors.New("no masternode private-key specified")
+	if len(cargs.MnPK) == 0 {
+		return errors.New("no masternode privatekey specified")
 	}
 
 	return coin.CreateConfFile(c.GetConfFilePath(), map[string]string{
@@ -87,9 +105,9 @@ func configure(c *coin.Coin, args []string) error {
 		"#masternode":        "1",
 		"maxconnections":     "256",
 		"bind":               "0.0.0.0",
-		"externalip":         CLI.ip,
-		"masternodeaddr":     fmt.Sprintf("%s:%d", CLI.ip, c.GetPort()),
-		"#masternodeprivkey": CLI.mnPK,
+		"externalip":         cargs.IP,
+		"masternodeaddr":     fmt.Sprintf("%s:%d", cargs.IP, c.GetPort()),
+		"#masternodeprivkey": cargs.MnPK,
 	})
 }
 
@@ -120,8 +138,9 @@ func init() {
 		"pivx-cli",  // Status binaries
 		"pivx.conf", // Coin config file
 
-		filepath.Join(coin.HomeDir(), "pivx", "pivx-2.2.1", "bin"), // Default binary path
-		filepath.Join(coin.HomeDir(), ".pivx"),                     // Default data path
+		filepath.Join(coin.HomeDir(), "pivx"),  // Base path to wallet dl
+		filepath.Join("pivx-2.2.1", "bin"),     // Subpath to binaries
+		filepath.Join(coin.HomeDir(), ".pivx"), // Default data path
 
 		////////////////////////////////////////////////////////////
 		// Wallet download utility, if version is not set, this is a no-op.

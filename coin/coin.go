@@ -11,6 +11,8 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+
+	"github.com/sabhiram/gomn/cmdargs"
 )
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -28,12 +30,14 @@ type CoinFunc func(c *Coin, args []string) error
 // CoinState represents a collection of dynamic coin properties that are only
 // known at run-time.
 type CoinState struct {
-	binPath         string // path where the bins will exist
-	binPathExists   bool   // true if the above path exists
-	daemonBinPath   string // populated if the daemon binary exists at the specified path
-	daemonBinExists bool   // true if the above file exists
-	statusBinPath   string // populated if the status binary exists at the specified path
-	statusBinExists bool   // true if the above file exists
+	walletPath       string // path where the wallet will exist
+	walletPathExists bool   // true if the above path exists
+	binPath          string // path where the bins will exist
+	binPathExists    bool   // true if the above path exists
+	daemonBinPath    string // populated if the daemon binary exists at the specified path
+	daemonBinExists  bool   // true if the above file exists
+	statusBinPath    string // populated if the status binary exists at the specified path
+	statusBinExists  bool   // true if the above file exists
 
 	dataPath         string            // path where the data will exist
 	dataPathExists   bool              // true if the above path exists
@@ -52,11 +56,12 @@ type Coin struct {
 	port    int    // port number for the coins peering
 	rpcPort int    // port number for RPC comm
 
-	daemonBin       string // name of the daemon to launch the coin's node
-	statusBin       string // name of the binary to check status
-	configFile      string // name of the config file in the data directory
-	defaultBinPath  string // default path where the bins will exist
-	defaultDataPath string // default path where the data will exist
+	daemonBin         string // name of the daemon to launch the coin's node
+	statusBin         string // name of the binary to check status
+	configFile        string // name of the config file in the data directory
+	defaultWalletPath string // default path where the wallet is extracted
+	defaultBinSubPath string // subpath to the binaries
+	defaultDataPath   string // default path where the data will exist
 
 	// Coin specific downloaders (can be nil0)
 	walletDownloader    *WalletDownloader
@@ -74,22 +79,30 @@ type Coin struct {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-func (c *Coin) UpdateDynamic(bins, data string) error {
+func (c *Coin) UpdateDynamic(wallet, subpath, data string) error {
 	if c == nil {
 		return errors.New("nil coin, cannot update dynamic portions")
 	}
 
 	////////////////////////////////////////////////////////////
 
-	c.state.binPath = c.defaultBinPath
-	if len(bins) > 0 {
-		c.state.binPath = bins
+	c.state.walletPath = c.defaultWalletPath
+	if len(subpath) > 0 {
+		c.state.walletPath = subpath
 	}
+	c.state.walletPathExists = DirExists(c.state.walletPath)
 
+	subpathToBins := c.defaultBinSubPath
+	if len(subpath) > 0 {
+		subpathToBins = subpath
+	}
+	c.state.binPath = filepath.Join(c.state.walletPath, subpathToBins)
 	c.state.binPathExists = DirExists(c.state.binPath)
+
 	c.state.daemonBinPath = filepath.Join(c.state.binPath, c.daemonBin)
-	c.state.statusBinPath = filepath.Join(c.state.binPath, c.statusBin)
 	c.state.daemonBinExists = FileExists(c.state.daemonBinPath)
+
+	c.state.statusBinPath = filepath.Join(c.state.binPath, c.statusBin)
 	c.state.statusBinExists = FileExists(c.state.statusBinPath)
 
 	////////////////////////////////////////////////////////////
@@ -191,13 +204,15 @@ func (c *Coin) PrintCoinInfo(prefix string) error {
 	}
 
 	fmt.Printf(`%s
-  * Binary Directory:   %s
+  * Base directory:     %s
+  * Binary directory:   %s
   * Coin daemon binary: %s
   * Coin status binary: %s
-  * Data Directory:     %s
-  * Config File:        %s
+  * Data directory:     %s
+  * Config file:        %s
 `,
 		prefix,
+		phelper(c.state.walletPath, c.state.walletPathExists),
 		phelper(c.state.binPath, c.state.binPathExists),
 		phelper(c.state.daemonBinPath, c.state.daemonBinExists),
 		phelper(c.state.statusBinPath, c.state.statusBinExists),
@@ -209,20 +224,21 @@ func (c *Coin) PrintCoinInfo(prefix string) error {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-func (c *Coin) DownloadWallet() error {
-	if c.state.binPathExists &&
+func (c *Coin) DownloadWallet(args []string, override *cmdargs.Download) error {
+	if c.state.walletPathExists &&
+		c.state.binPathExists &&
 		c.state.daemonBinExists &&
 		c.state.statusBinExists {
 		return errors.New("wallet binary already exists (TODO: Add --force option)")
 	}
-	return c.walletDownloader.DownloadToPath(c.state.binPath)
+	return c.walletDownloader.DownloadToPath(c.state.walletPath, override)
 }
 
-func (c *Coin) DownloadBootstrap() error {
+func (c *Coin) DownloadBootstrap(args []string, override *cmdargs.Bootstrap) error {
 	if c.state.dataPathExists {
 		return errors.New("wallet data already exists (TODO: add --force option)")
 	}
-	return c.bootstrapDownloader.DownloadToPath(c.state.dataPath)
+	return c.bootstrapDownloader.DownloadToPath(c.state.dataPath, override)
 }
 
 ////////////////////////////////////////////////////////////////////////////////

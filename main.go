@@ -8,6 +8,8 @@ import (
 	"strings"
 
 	"github.com/sabhiram/gomn/coin"
+	"github.com/sabhiram/gomn/monitor"
+	"github.com/sabhiram/gomn/types"
 	"github.com/sabhiram/gomn/version"
 
 	// Include any coins that we want to manage mns for using gomn
@@ -18,6 +20,7 @@ import (
 ////////////////////////////////////////////////////////////////////////////////
 
 var (
+	cli         = &types.CLI{}
 	GoMnVersion = version.VersionString
 	GoMnHelp    = `
 GoMn Usage:
@@ -70,17 +73,11 @@ COMMANDS:
 
     monitor      Once all other things are setup, this will monitor your MN.
                  If '--callbackurl' is specified, updates are sent to the URL
-                 as the node's state changes.
+                 as the node's state changes.  If '--start' is specified, this
+                 will kick off the node's specified daemon.  If '--start' is not
+                 specified and the server is not running, this will abort.
 
 `
-
-	CLI = struct {
-		coin     string   // Name of the coin we are operating on
-		wallet   string   // base path to where wallet binaries will be extracted  (empty => coin default)
-		binPath  string   // sub-Path to coin's binary directory (empty => coin default)
-		dataPath string   // Path to coin's data directory (empty => coin default)
-		args     []string // Rest of the command line, args[0] is the command
-	}{}
 )
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -96,9 +93,9 @@ func fatalOnError(err error) {
 func main() {
 	cmd := "help"
 	opts := []string{}
-	if len(CLI.args) > 0 {
-		cmd = strings.ToLower(CLI.args[0])
-		opts = CLI.args[1:]
+	if len(cli.Args) > 0 {
+		cmd = strings.ToLower(cli.Args[0])
+		opts = cli.Args[1:]
 	}
 
 	switch cmd {
@@ -117,10 +114,12 @@ func main() {
 		} else {
 			log.Printf("No coins registered!\n\n")
 		}
+	case "monitor":
+		m, err := monitor.New(cli, opts)
+		fatalOnError(err)
+		m.Start() // Run indefinitely
 	default:
-		if err := coin.Command(CLI.coin, CLI.wallet, CLI.binPath, CLI.dataPath, cmd, opts); err != nil {
-			fatalOnError(err)
-		}
+		fatalOnError(coin.Command(cli, cmd, opts))
 	}
 }
 
@@ -132,15 +131,15 @@ func init() {
 	log.SetPrefix("")
 
 	// CLI Argument parsing.
-	flag.StringVar(&CLI.coin, "coin", "", "currency you are setting up a mn for")
-	flag.StringVar(&CLI.wallet, "wallet", "", "base path to where wallet binaries will be extracted (optional)")
-	flag.StringVar(&CLI.binPath, "bins", "", "path where the coin's binaries should reside (optional)")
-	flag.StringVar(&CLI.dataPath, "data", "", "path where the blockchain data should reside (optional)")
+	flag.StringVar(&cli.Coin, "coin", "", "currency you are setting up a mn for")
+	flag.StringVar(&cli.Wallet, "wallet", "", "base path to where wallet binaries will be extracted (optional)")
+	flag.StringVar(&cli.BinPath, "bins", "", "path where the coin's binaries should reside (optional)")
+	flag.StringVar(&cli.DataPath, "data", "", "path where the blockchain data should reside (optional)")
 	flag.Parse()
 
 	// Normalize and fix-up arguments.
-	CLI.args = flag.Args()
-	CLI.coin = strings.ToLower(CLI.coin)
+	cli.Args = flag.Args()
+	cli.Coin = strings.ToLower(cli.Coin)
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -5,6 +5,8 @@ package coin
 import (
 	"fmt"
 	"sync"
+
+	"github.com/sabhiram/gomn/types"
 )
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -117,33 +119,33 @@ func IsRegistered(name string) bool {
 // Command executes a given coin's (specified by `name`), `cmd` function
 // if one was registered. If the function was nil, then it has no implementation
 // and we do nothing.  If the command was not found we return an error.
-func Command(name, wallet, bins, data, cmd string, args []string) error {
+func Command(cli *types.CLI, cmd string, opts []string) error {
 	coinsLock.Lock()
 	defer coinsLock.Unlock()
 
-	c, ok := coins[name]
+	c, ok := coins[cli.Coin]
 	if !ok {
-		return fmt.Errorf("invalid coin specified (%s)", name)
+		return fmt.Errorf("invalid coin specified (%s)", cli.Coin)
 	}
 
 	// Update the dynamic properties of the coin like the binary directory
 	// and the data directory for each coin. This will use the default versions
 	// unless we have an override. This allows us to invoke each CoinFunc more
 	// tersely and bundles all extra data into the Coin object.
-	c.UpdateDynamic(wallet, bins, data)
+	c.UpdateDynamic(cli.Wallet, cli.BinPath, cli.DataPath)
 
 	// Find and invoke the appropriate coin func (if valid).
 	switch cmd {
 	case "info":
-		return c.fnMap.InfoFn(c, args)
+		return c.fnMap.InfoFn(c, opts)
 	case "download":
-		return c.fnMap.DownloadFn(c, args)
+		return c.fnMap.DownloadFn(c, opts)
 	case "bootstrap":
-		return c.fnMap.BootstrapFn(c, args)
+		return c.fnMap.BootstrapFn(c, opts)
 	case "configure":
-		return c.fnMap.ConfigureFn(c, args)
+		return c.fnMap.ConfigureFn(c, opts)
 	case "getinfo":
-		return c.fnMap.GetInfoFn(c, args)
+		return c.fnMap.GetInfoFn(c, opts)
 	default:
 		return fmt.Errorf("invalid command specified (%s)", cmd)
 	}

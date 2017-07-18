@@ -1,5 +1,5 @@
-// Package cmdargs holds a bunch of commonly passed around structures.
-package cmdargs
+// Package types holds a bunch of commonly passed around structures.
+package types
 
 ////////////////////////////////////////////////////////////////////////////////
 

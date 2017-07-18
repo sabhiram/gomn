@@ -17,7 +17,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/sabhiram/gomn/cmdargs"
+	"github.com/sabhiram/gomn/types"
 )
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -223,7 +223,7 @@ func NewWalletDownloader(v, url, ct, sha string) *WalletDownloader {
 // DownloadToPath grabs the underlying wallet file, and checks its sha256sum
 // to verify that it is indeed the expected file. If so, it extracts the
 // contents to the appropriate
-func (w *WalletDownloader) DownloadToPath(walletPath string, override *cmdargs.Download) error {
+func (w *WalletDownloader) DownloadToPath(walletPath string, override *types.Download) error {
 	sourceURL := w.DownloadURL
 	if len(override.URL) > 0 {
 		sourceURL = override.URL
@@ -293,7 +293,7 @@ func NewBootstrapDownloader(url, ctype string) *BootstrapDownloader {
 
 // DownloadToPath grabs a archive from a web url defined in `b` and extracts
 // the file if needed into `bootstrapPath`.
-func (b *BootstrapDownloader) DownloadToPath(bootstrapPath string, override *cmdargs.Bootstrap) error {
+func (b *BootstrapDownloader) DownloadToPath(bootstrapPath string, override *types.Bootstrap) error {
 	sourceURL := b.DownloadURL
 	if len(override.URL) > 0 {
 		sourceURL = override.URL

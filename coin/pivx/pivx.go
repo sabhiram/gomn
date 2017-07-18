@@ -10,8 +10,8 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	"github.com/sabhiram/gomn/cmdargs"
 	"github.com/sabhiram/gomn/coin"
+	"github.com/sabhiram/gomn/types"
 )
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -51,7 +51,7 @@ func download(c *coin.Coin, args []string) error {
 
 	// Parse command arguments
 	fs := flag.NewFlagSet("pivx-download", flag.ContinueOnError)
-	cargs := &cmdargs.Download{}
+	cargs := &types.Download{}
 	fs.StringVar(&cargs.URL, "url", "", "override the wallet download URL")
 	fs.StringVar(&cargs.Type, "type", "", "override the wallet download type (compression)")
 	fs.StringVar(&cargs.ShaSum, "shasum", "", "override the wallet's sha256sum")
@@ -66,7 +66,7 @@ func bootstrap(c *coin.Coin, args []string) error {
 
 	// Parse command arguments
 	fs := flag.NewFlagSet("pivx-bootstrap", flag.ContinueOnError)
-	cargs := &cmdargs.Bootstrap{}
+	cargs := &types.Bootstrap{}
 	fs.StringVar(&cargs.URL, "url", "", "override the bootstrap URL")
 	fs.StringVar(&cargs.Type, "type", "", "override the bootstrap type (compression)")
 	if err := fs.Parse(args); err != nil {
@@ -80,7 +80,7 @@ func configure(c *coin.Coin, args []string) error {
 
 	// Parse command arguments
 	fs := flag.NewFlagSet("pivx-configure", flag.ContinueOnError)
-	cargs := &cmdargs.Configure{}
+	cargs := &types.Configure{}
 	fs.StringVar(&cargs.IP, "ip", "", "masternode's fixed IP (required)")
 	fs.StringVar(&cargs.MnPK, "mnpkey", "", "masternode's private key (required)")
 	if err := fs.Parse(args); err != nil {
@@ -128,7 +128,7 @@ func getinfo(c *coin.Coin, args []string) error {
 // Automatically register pivx with gomn if it is included.
 func init() {
 	// Register the coin and any relevant functions.
-	coin.RegisterCoin(
+	err := coin.RegisterCoin(
 		////////////////////////////////////////////////////////////
 		// Register coin constants.
 		"pivx",      // Name of the coin
@@ -160,18 +160,21 @@ func init() {
 		},
 
 		////////////////////////////////////////////////////////////
-		// Register coin functions.
-		map[string]coin.CoinFunc{
-			"info":      info,
-			"download":  download,
-			"bootstrap": bootstrap,
-			"configure": configure,
-			"getinfo":   getinfo,
+		// Register required coin functions.
+		&coin.FunctionMap{
+			InfoFn:      info,
+			DownloadFn:  download,
+			BootstrapFn: bootstrap,
+			ConfigureFn: configure,
+			GetInfoFn:   getinfo,
 		},
 
 		////////////////////////////////////////////////////////////
-		// Opaque interface for coin
+		// Opaque interface for coin.
 		&PIVX{})
+	if err != nil {
+		panic(err.Error())
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////

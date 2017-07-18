@@ -9,6 +9,39 @@ import (
 
 ////////////////////////////////////////////////////////////////////////////////
 
+type CoinFunc func(c *Coin, args []string) error
+
+type FunctionMap struct {
+	InfoFn      CoinFunc
+	DownloadFn  CoinFunc
+	BootstrapFn CoinFunc
+	ConfigureFn CoinFunc
+	GetInfoFn   CoinFunc
+}
+
+func (fm *FunctionMap) Validate(c *Coin) error {
+	if fm.GetInfoFn == nil {
+		return fmt.Errorf("Warning: %s does not implement required command: %s", c.name, "getinfo")
+	}
+	if fm.InfoFn == nil {
+		return fmt.Errorf("Warning: %s does not implement required command: %s", c.name, "info")
+	}
+	if fm.DownloadFn == nil {
+		return fmt.Errorf("Warning: %s does not implement required command: %s", c.name, "download")
+	}
+	if fm.BootstrapFn == nil {
+		return fmt.Errorf("Warning: %s does not implement required command: %s", c.name, "bootstrap")
+	}
+	if fm.ConfigureFn == nil {
+		return fmt.Errorf("Warning: %s does not implement required command: %s", c.name, "configure")
+	}
+	return nil
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
 // coins stores the currently registered coins that the system is aware of.
 var (
 	coinsLock = sync.RWMutex{}
@@ -22,7 +55,7 @@ func RegisterCoin(
 	daemonBin, statusBin, configFile string,
 	defWalletPath, defBinSubPath, defDataPath string,
 	wdl *WalletDownloader, bdl *BootstrapDownloader,
-	fnMap map[string]CoinFunc, opaque interface{}) error {
+	fnMap *FunctionMap, opaque interface{}) error {
 
 	coinsLock.Lock()
 	defer coinsLock.Unlock()
@@ -53,8 +86,7 @@ func RegisterCoin(
 		// Computed properties will be set on each command invocation.
 		state: &CoinState{},
 	}
-
-	return nil
+	return coins[name].fnMap.Validate(coins[name])
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -101,14 +133,20 @@ func Command(name, wallet, bins, data, cmd string, args []string) error {
 	c.UpdateDynamic(wallet, bins, data)
 
 	// Find and invoke the appropriate coin func (if valid).
-	fn, ok := c.fnMap[cmd]
-	if !ok {
+	switch cmd {
+	case "info":
+		return c.fnMap.InfoFn(c, args)
+	case "download":
+		return c.fnMap.DownloadFn(c, args)
+	case "bootstrap":
+		return c.fnMap.BootstrapFn(c, args)
+	case "configure":
+		return c.fnMap.ConfigureFn(c, args)
+	case "getinfo":
+		return c.fnMap.GetInfoFn(c, args)
+	default:
 		return fmt.Errorf("invalid command specified (%s)", cmd)
 	}
-	if fn == nil {
-		fmt.Printf("[%s] %s is a no-op. Doing nothing!\n", name, cmd)
-	}
-	return fn(c, args)
 }
 
 ////////////////////////////////////////////////////////////////////////////////

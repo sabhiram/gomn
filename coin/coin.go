@@ -12,7 +12,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/sabhiram/gomn/cmdargs"
+	"github.com/sabhiram/gomn/types"
 )
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -20,10 +20,6 @@ import (
 var (
 	emptyMap = map[string]string{}
 )
-
-////////////////////////////////////////////////////////////////////////////////
-
-type CoinFunc func(c *Coin, args []string) error
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -68,7 +64,7 @@ type Coin struct {
 	bootstrapDownloader *BootstrapDownloader
 
 	// Coin specific functions to invoke!
-	fnMap map[string]CoinFunc
+	fnMap *FunctionMap
 
 	// Opaque interface for the coin
 	opaque interface{}
@@ -224,7 +220,7 @@ func (c *Coin) PrintCoinInfo(prefix string) error {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-func (c *Coin) DownloadWallet(args []string, override *cmdargs.Download) error {
+func (c *Coin) DownloadWallet(args []string, override *types.Download) error {
 	if c.state.walletPathExists &&
 		c.state.binPathExists &&
 		c.state.daemonBinExists &&
@@ -234,7 +230,7 @@ func (c *Coin) DownloadWallet(args []string, override *cmdargs.Download) error {
 	return c.walletDownloader.DownloadToPath(c.state.walletPath, override)
 }
 
-func (c *Coin) DownloadBootstrap(args []string, override *cmdargs.Bootstrap) error {
+func (c *Coin) DownloadBootstrap(args []string, override *types.Bootstrap) error {
 	if c.state.dataPathExists {
 		return errors.New("wallet data already exists (TODO: add --force option)")
 	}

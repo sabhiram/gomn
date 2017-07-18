@@ -9,8 +9,6 @@ import (
 	"math/rand"
 	"strings"
 	"time"
-
-	"github.com/sabhiram/gomn/version"
 )
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -28,10 +26,10 @@ func GetRandomHex(size int) string {
 // `m`.
 func CreateConfFile(fp string, m map[string]string) error {
 	data := fmt.Sprintf(`# Warning: This is an auto-generated file! Do not hand-edit!
-#   Generated using gomn version %s on %s
+#   Generated using gomn on %s
 # Warning: This is an auto-generated file! Do not hand-edit!
 
-`, version.VersionString, time.Now().String())
+`, time.Now().String())
 	for k, v := range m {
 		data += fmt.Sprintf("%s=%s\n", k, v)
 	}

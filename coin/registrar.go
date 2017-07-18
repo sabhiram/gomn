@@ -114,6 +114,16 @@ func IsRegistered(name string) bool {
 	return ok
 }
 
+func GetCoinByName(name string) (*Coin, error) {
+	coinsLock.RLock()
+	defer coinsLock.RUnlock()
+
+	if c, ok := coins[name]; ok {
+		return c, nil
+	}
+	return nil, fmt.Errorf("invalid coin specified (%s)", name)
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 // Command executes a given coin's (specified by `name`), `cmd` function

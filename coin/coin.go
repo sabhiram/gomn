@@ -130,6 +130,10 @@ func (c *Coin) UpdateDynamic(wallet, subpath, data string) error {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+func (c *Coin) GetName() string {
+	return c.name
+}
+
 func (c *Coin) GetOpaque() interface{} {
 	return c.opaque
 }

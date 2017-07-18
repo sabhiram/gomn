@@ -10,4 +10,4 @@ script:
   - go test ./...
 after_success:
   - "[[ $TRAVIS_BRANCH =~ (^releases/[0-9]+.[0-9]+.[0-9]+) ]] && gox -output dist/{{.OS}}_{{.Arch}}_{{.Dir}}"
-  - "[[ $TRAVIS_BRANCH =~ (^releases/[0-9]+.[0-9]+.[0-9]+) ]] && ghr --username tcnksm-sample --token $GITHUB_TOKEN --replace dist/"
+  - "[[ $TRAVIS_BRANCH =~ (^releases/[0-9]+.[0-9]+.[0-9]+) ]] && ghr --username sabhiram --token $GITHUB_TOKEN --replace ${TRAVIS_BRANCH##*/} dist/"

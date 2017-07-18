@@ -10,7 +10,6 @@ import (
 	"github.com/sabhiram/gomn/coin"
 	"github.com/sabhiram/gomn/monitor"
 	"github.com/sabhiram/gomn/types"
-	"github.com/sabhiram/gomn/version"
 
 	// Include any coins that we want to manage mns for using gomn
 	// we can think of these as "plugins".
@@ -20,9 +19,8 @@ import (
 ////////////////////////////////////////////////////////////////////////////////
 
 var (
-	cli         = &types.CLI{}
-	GoMnVersion = version.VersionString
-	GoMnHelp    = `
+	cli      = &types.CLI{}
+	GoMnHelp = `
 GoMn Usage:
 ===========
 
@@ -102,7 +100,7 @@ func main() {
 	case "help":
 		log.Printf("%s\n", GoMnHelp)
 	case "version":
-		log.Printf("%s\n", GoMnVersion)
+		log.Printf("%s\n", Version)
 	case "list":
 		cs := coin.RegisteredCoins()
 		if len(cs) > 0 {

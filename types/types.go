@@ -3,6 +3,9 @@ package types
 
 ////////////////////////////////////////////////////////////////////////////////
 
+// CLI represents all command line arguments that the `gomn` application can
+// receive directly. Sub-command specific arguments are encapsulated in the
+// structures below.
 type CLI struct {
 	Coin     string   // Name of the coin we are operating on
 	Wallet   string   // base path to where wallet binaries will be extracted  (empty => coin default)
@@ -13,17 +16,20 @@ type CLI struct {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+// Download represents the arguments passed to the "download" command.
 type Download struct {
 	URL    string
 	Type   string
 	ShaSum string
 }
 
+// Bootstrap represents the arguments passed to the "download" command.
 type Bootstrap struct {
 	URL  string
 	Type string
 }
 
+// Configure represents the arguments passed to the "download" command.
 type Configure struct {
 	IP   string
 	MnPK string

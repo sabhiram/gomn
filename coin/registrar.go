@@ -82,13 +82,13 @@ func RegisterCoin(
 		walletDownloader:    wdl,
 		bootstrapDownloader: bdl,
 
-		fnMap:  fnMap,
+		FnMap:  fnMap,
 		opaque: opaque,
 
 		// Computed properties will be set on each command invocation.
 		state: &CoinState{},
 	}
-	return coins[name].fnMap.Validate(coins[name])
+	return coins[name].FnMap.Validate(coins[name])
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -147,15 +147,15 @@ func Command(cli *types.CLI, cmd string, opts []string) error {
 	// Find and invoke the appropriate coin func (if valid).
 	switch cmd {
 	case "info":
-		return c.fnMap.InfoFn(c, opts)
+		return c.FnMap.InfoFn(c, opts)
 	case "download":
-		return c.fnMap.DownloadFn(c, opts)
+		return c.FnMap.DownloadFn(c, opts)
 	case "bootstrap":
-		return c.fnMap.BootstrapFn(c, opts)
+		return c.FnMap.BootstrapFn(c, opts)
 	case "configure":
-		return c.fnMap.ConfigureFn(c, opts)
+		return c.FnMap.ConfigureFn(c, opts)
 	case "getinfo":
-		return c.fnMap.GetInfoFn(c, opts)
+		return c.FnMap.GetInfoFn(c, opts)
 	default:
 		return fmt.Errorf("invalid command specified (%s)", cmd)
 	}

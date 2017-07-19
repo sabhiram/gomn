@@ -68,22 +68,30 @@ const (
 )
 
 func (m *Monitor) Start() error {
-	// TODO: Check to see if coin is running, if it is we are ok. If not and
-	//       we do not have the --start option set, then we kick off the
-	// 		 coin's daemon and wait for it to get going.
-	if m.Opts.start {
-		fmt.Printf("Starting daemon!\n")
+	daemonRunning := false
+	if err := m.Coin.FnMap.GetInfoFn(m.Coin, nil); err == nil {
+		daemonRunning = true
+	}
+
+	if !daemonRunning && !m.Opts.start {
+		return fmt.Errorf("%s daemon is not running, try adding the --start option to monitor", m.Coin.GetName())
+	} else if !daemonRunning {
+		// Attempt to start the coin's daemon.
+		fmt.Printf("Trying to start %s daemon\n", m.Coin.GetName())
 		if err := m.Coin.StartDaemon(); err != nil {
-			// TODO: if err is already started, dont bail
 			return err
 		}
+		fmt.Printf("... started at %s\n", time.Now().String())
 	}
 
 	for {
-
 		select {
 		case <-time.After(1 * time.Second):
 			fmt.Printf("Monitoring coin %s\n", m.Coin.GetName())
+			err := m.Coin.FnMap.GetInfoFn(m.Coin, nil)
+			if err != nil {
+				fmt.Printf("Warning: Coin daemon down? : %s\n", err.Error())
+			}
 		}
 	}
 }

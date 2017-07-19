@@ -64,7 +64,7 @@ type Coin struct {
 	bootstrapDownloader *BootstrapDownloader
 
 	// Coin specific functions to invoke!
-	fnMap *FunctionMap
+	FnMap *FunctionMap
 
 	// Opaque interface for the coin
 	opaque interface{}

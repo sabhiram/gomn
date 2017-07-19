@@ -4,6 +4,7 @@ package coin
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os/exec"
 )
@@ -14,7 +15,7 @@ import (
 // set of options to execute the command with.  Returns the stdout, stderr and
 // any errors from trying to execute the command.  This function blocks until
 // the command finishes.
-func ExecCmd(cmd string, args ...string) ([]byte, []byte, error) {
+func ExecCmd(cmd string, args ...string) (io.ReadCloser, io.ReadCloser, error) {
 	c := exec.Command(cmd, args...)
 	stdPipe, err := c.StdoutPipe()
 	if err != nil {
@@ -28,27 +29,28 @@ func ExecCmd(cmd string, args ...string) ([]byte, []byte, error) {
 	if err := c.Start(); err != nil {
 		return nil, nil, err
 	}
-
-	stdout, err := ioutil.ReadAll(stdPipe)
-	if err != nil {
-		return nil, nil, err
-	}
-	stderr, err := ioutil.ReadAll(errPipe)
-	if err != nil {
-		return nil, nil, err
-	}
-	return stdout, stderr, err
+	return stdPipe, errPipe, err
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
 func (c *Coin) StartDaemon() error {
-	p := c.GetDaemonBinPath()
-	fmt.Printf("Daemon exists at: %s\n", p)
-	stdout, stderr, err := ExecCmd(p)
-	fmt.Printf("STDOUT: %s\n", string(stdout))
-	fmt.Printf("STDERR: %s\n", string(stderr))
+	stdout, stderr, err := ExecCmd(c.GetDaemonBinPath())
+	go func(outp, errp io.ReadCloser) {
+		// This is for debugging only...
+		stdout, err := ioutil.ReadAll(outp)
+		if err != nil {
+			fmt.Printf("Unable to read stdout from cmd! %s\n", err.Error())
+		}
+		stderr, err := ioutil.ReadAll(errp)
+		if err != nil {
+			fmt.Printf("Unable to read stderr from cmd! %s\n", err.Error())
+		}
+		fmt.Printf("STDOUT: %s\n", stdout)
+		fmt.Printf("STDERR: %s\n", stderr)
+	}(stdout, stderr)
 	return err
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////

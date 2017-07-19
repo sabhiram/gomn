@@ -114,8 +114,12 @@ func main() {
 		}
 	case "monitor":
 		m, err := monitor.New(cli, opts)
-		fatalOnError(err)
-		m.Start() // Run indefinitely
+		if err != nil {
+			log.Fatalf("Unable to monitor %s! %s\n", cli.Coin, err.Error())
+		}
+		if err := m.Start(); err != nil {
+			log.Fatalf("Monitor exited! Error: %s\n", err.Error())
+		}
 	default:
 		fatalOnError(coin.Command(cli, cmd, opts))
 	}

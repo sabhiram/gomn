@@ -3,17 +3,18 @@ package coin
 ////////////////////////////////////////////////////////////////////////////////
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os/exec"
 )
 
 ////////////////////////////////////////////////////////////////////////////////
 
-// RPCCommand takes a executable at path specified by `cmd`, where `args` are a
+// ExecCmd takes a executable at path specified by `cmd`, where `args` are a
 // set of options to execute the command with.  Returns the stdout, stderr and
 // any errors from trying to execute the command.  This function blocks until
 // the command finishes.
-func RPCCommand(cmd string, args ...string) ([]byte, []byte, error) {
+func ExecCmd(cmd string, args ...string) ([]byte, []byte, error) {
 	c := exec.Command(cmd, args...)
 	stdPipe, err := c.StdoutPipe()
 	if err != nil {
@@ -37,6 +38,17 @@ func RPCCommand(cmd string, args ...string) ([]byte, []byte, error) {
 		return nil, nil, err
 	}
 	return stdout, stderr, err
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+func (c *Coin) StartDaemon() error {
+	p := c.GetDaemonBinPath()
+	fmt.Printf("Daemon exists at: %s\n", p)
+	stdout, stderr, err := ExecCmd(p)
+	fmt.Printf("STDOUT: %s\n", string(stdout))
+	fmt.Printf("STDERR: %s\n", string(stderr))
+	return err
 }
 
 ////////////////////////////////////////////////////////////////////////////////

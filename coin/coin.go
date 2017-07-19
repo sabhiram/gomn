@@ -145,6 +145,13 @@ func (c *Coin) GetBinPath() string {
 	return c.state.binPath
 }
 
+func (c *Coin) GetDaemonBinPath() string {
+	if c == nil || c.state == nil {
+		return ""
+	}
+	return c.state.daemonBinPath
+}
+
 func (c *Coin) GetDataPath() string {
 	if c == nil || c.state == nil {
 		return ""

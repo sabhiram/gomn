@@ -48,11 +48,9 @@ func New(cli *types.CLI, opts []string) (*Monitor, error) {
 		return nil, err
 	}
 
-	// TODO: Verify that coin is correctly setup
+	c.UpdateDynamic(cli.Wallet, cli.BinPath, cli.DataPath)
 
-	// TODO: Check to see if coin is running, if it is we are ok. If not and
-	//       we do not have the --start option set, then we kick off the
-	// 		 coin's daemon and wait for it to get going.
+	// TODO: Verify that coin is correctly setup
 
 	return &Monitor{
 		Coin: c,
@@ -63,8 +61,26 @@ func New(cli *types.CLI, opts []string) (*Monitor, error) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+const (
+	cStateInit                        = iota
+	cStateWaitStart                   = iota
+	cStateMasternodePendingActivation = iota
+)
+
 func (m *Monitor) Start() error {
+	// TODO: Check to see if coin is running, if it is we are ok. If not and
+	//       we do not have the --start option set, then we kick off the
+	// 		 coin's daemon and wait for it to get going.
+	if m.Opts.start {
+		fmt.Printf("Starting daemon!\n")
+		if err := m.Coin.StartDaemon(); err != nil {
+			// TODO: if err is already started, dont bail
+			return err
+		}
+	}
+
 	for {
+
 		select {
 		case <-time.After(1 * time.Second):
 			fmt.Printf("Monitoring coin %s\n", m.Coin.GetName())

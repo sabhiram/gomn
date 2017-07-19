@@ -7,7 +7,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"path/filepath"
 
 	"github.com/sabhiram/gomn/coin"
@@ -112,14 +111,22 @@ func configure(c *coin.Coin, args []string) error {
 }
 
 func getinfo(c *coin.Coin, args []string) error {
-	fmt.Printf("Attempting to fetch blockchain info for PIVX\n")
 	rsp, err := c.DoJSONRPCCommand("getinfo", nil)
 	if err != nil {
 		return err
 	}
 
-	response, err := ioutil.ReadAll(rsp.Body)
-	fmt.Printf("GOT RESPONSE: %s\n", response)
+	if rsp.Error.Code != 0 {
+		switch rsp.Error.Code {
+		case -28:
+			fmt.Printf("pivxd starting up -- %s\n", rsp.Error.Message)
+		default:
+			return fmt.Errorf("RPC error (%d) : %s\n", rsp.Error.Code, rsp.Error.Message)
+		}
+	}
+
+	// TODO: Return a coin-generic status along with the various info pieces.
+	fmt.Printf("GOT RESPONSE: %#v\n", rsp)
 	return err
 }
 

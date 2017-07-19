@@ -37,20 +37,16 @@ func ExecCmd(cmd string, args ...string) (io.ReadCloser, io.ReadCloser, error) {
 func (c *Coin) StartDaemon() error {
 	stdout, stderr, err := ExecCmd(c.GetDaemonBinPath())
 	go func(outp, errp io.ReadCloser) {
-		// This is for debugging only...
-		stdout, err := ioutil.ReadAll(outp)
+		_, err := ioutil.ReadAll(outp)
 		if err != nil {
 			fmt.Printf("Unable to read stdout from cmd! %s\n", err.Error())
 		}
-		stderr, err := ioutil.ReadAll(errp)
+		_, err = ioutil.ReadAll(errp)
 		if err != nil {
 			fmt.Printf("Unable to read stderr from cmd! %s\n", err.Error())
 		}
-		fmt.Printf("STDOUT: %s\n", stdout)
-		fmt.Printf("STDERR: %s\n", stderr)
 	}(stdout, stderr)
 	return err
-
 }
 
 ////////////////////////////////////////////////////////////////////////////////

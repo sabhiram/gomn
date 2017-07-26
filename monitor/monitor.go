@@ -14,14 +14,23 @@ import (
 ////////////////////////////////////////////////////////////////////////////////
 
 type monitorOpts struct {
-	start bool
+	start              bool
+	refreshIntervalStr string
+	refreshInterval    time.Duration
 }
 
 func parseMonitorArgs(opts []string) (*monitorOpts, error) {
 	args := &monitorOpts{}
 	fs := flag.NewFlagSet("monitor", flag.ContinueOnError)
 	fs.BoolVar(&args.start, "start", false, "start the coin daemon if it is not running")
+	fs.StringVar(&args.refreshIntervalStr, "refresh", "30s", "refresh interval, default 30s")
 	if err := fs.Parse(opts); err != nil {
+		return nil, err
+	}
+
+	var err error
+	args.refreshInterval, err = time.ParseDuration(args.refreshIntervalStr)
+	if err != nil {
 		return nil, err
 	}
 	return args, nil
@@ -62,9 +71,12 @@ func New(cli *types.CLI, opts []string) (*Monitor, error) {
 ////////////////////////////////////////////////////////////////////////////////
 
 const (
-	cStateInit                        = iota
-	cStateWaitStart                   = iota
-	cStateMasternodePendingActivation = iota
+	cStateInit                        = iota // Initial state
+	cStateWaitStart                   = iota // Waiting for the daemon to startup
+	cStateWaitMasternode              = iota // Waiting for masternode to come up
+	cStateMasternodePendingActivation = iota // Masternode is pending client activation
+	cStateMasternodeRunning           = iota // Masternode running fine and dandy
+	cStateNotCapbaleMasternode        = iota // Error state: node not capable of being a masternode
 )
 
 func (m *Monitor) Start() error {
@@ -86,7 +98,7 @@ func (m *Monitor) Start() error {
 
 	for {
 		select {
-		case <-time.After(1 * time.Second):
+		case <-time.After(m.Opts.refreshInterval):
 			fmt.Printf("Monitoring coin %s\n", m.Coin.GetName())
 			err := m.Coin.FnMap.GetInfoFn(m.Coin, nil)
 			if err != nil {
